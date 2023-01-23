@@ -22,21 +22,42 @@ import org.joda.time.DateTimeZone;
 
 import java.util.Map;
 
+/*
+ * KubernetesInstance represents an agent pod in Kubernetes.
+ */
 public class KubernetesInstance {
     private final DateTime createdAt;
+
+    // populated from k8s pod metadata.labels.Elastic-Agent-Environment
     private final String environment;
+
+    private AgentState agentState;
+
+    public enum AgentState {
+        Unknown, // agent hasn't yet registered with the plugin
+        Idle, // agent has just finished work
+        Building, // agent has been assigned work
+    }
+
     private final String name;
+
+    // populated from k8s pod metadata.annotations
+    // gocd/cluster-profile-id contains uuid of the profile
+    // gocd/elastic-profile-id contains hash of the profile
     private final Map<String, String> properties;
+
+    // populated from k8s pod metadata.labels.Elastic-Agent-Job-Id
     private final Long jobId;
     private final PodState state;
 
-    public KubernetesInstance(DateTime createdAt, String environment, String name, Map<String, String> properties, Long jobId, PodState state) {
+    public KubernetesInstance(DateTime createdAt, String environment, String name, Map<String, String> properties, Long jobId, PodState state, AgentState agentState) {
         this.createdAt = createdAt.withZone(DateTimeZone.UTC);
         this.environment = environment;
         this.name = name;
         this.properties = properties;
         this.jobId = jobId;
         this.state = state;
+        this.agentState = agentState;
     }
 
     public void terminate(KubernetesClient client) {
@@ -65,5 +86,13 @@ public class KubernetesInstance {
 
     public boolean isPending() {
         return this.state.equals(PodState.Pending);
+    }
+
+    public AgentState getAgentState() {
+        return agentState;
+    }
+
+    public void setAgentState(AgentState newState) {
+        this.agentState = newState;
     }
 }

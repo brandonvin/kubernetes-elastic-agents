@@ -28,6 +28,7 @@ import org.joda.time.Period;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
@@ -59,15 +60,15 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
 
     @Override
     public KubernetesInstance create(CreateAgentRequest request, PluginSettings settings, PluginRequest pluginRequest, ConsoleLogAppender consoleLogAppender) {
-        final Integer maxAllowedContainers = settings.getMaxPendingPods();
+        final Integer maxAllowedPods = settings.getMaxPendingPods();
         synchronized (instances) {
             refreshAll(settings);
-            doWithLockOnSemaphore(new SetupSemaphore(maxAllowedContainers, instances, semaphore));
+            doWithLockOnSemaphore(new SetupSemaphore(maxAllowedPods, instances, semaphore));
             consoleLogAppender.accept("Waiting to create agent pod.");
             if (semaphore.tryAcquire()) {
                 return createKubernetesInstance(request, settings, pluginRequest, consoleLogAppender);
             } else {
-                String message = format("[Create Agent Request] The number of pending kubernetes pods is currently at the maximum permissible limit ({0}). Total kubernetes pods ({1}). Not creating any more containers.", maxAllowedContainers, instances.size());
+                String message = format("[Create Agent Request] The number of pending kubernetes pods is currently at the maximum permissible limit ({0}). Total kubernetes pods ({1}). Not creating any more pods.", maxAllowedPods, instances.size());
                 LOG.warn(message);
                 consoleLogAppender.accept(message);
                 return null;
@@ -81,7 +82,46 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
         }
     }
 
+    private List<KubernetesInstance> findPodsEligibleForReuse(
+        CreateAgentRequest request,
+        PluginSettings settings,
+        PluginRequest pluginRequest,
+        ConsoleLogAppender consoleLogAppender) {
+        Long jobId = request.jobIdentifier().getJobId();
+
+        List<KubernetesInstance> eligiblePods = new ArrayList<>();
+
+        for (KubernetesInstance instance : instances.values()) {
+            if (instance.jobId().equals(jobId)) {
+                eligiblePods.add(instance);
+                continue;
+            }
+
+            // TODO: existing pod matches this - cluster profile matches, elastic profile matches
+            // TODO: and is idle
+            boolean sameElasticProfile = request.properties().equals(
+                    instance.getInstanceProperties().getOrDefault("gocd/elastic-profile-id", "unknown"));
+            boolean sameClusterProfile = request.clusterProfileProperties().uuid().equals(
+                    instance.getInstanceProperties().getOrDefault("gocd/cluster-profile-id", "unknown"));
+            boolean instanceIsIdle = instance.getAgentState().equals(KubernetesInstance.AgentState.Idle);
+            if (sameElasticProfile && sameClusterProfile && instanceIsIdle) {
+                eligiblePods.add(instance);
+            }
+        }
+
+        return eligiblePods;
+    }
+
+
     private KubernetesInstance createKubernetesInstance(CreateAgentRequest request, PluginSettings settings, PluginRequest pluginRequest, ConsoleLogAppender consoleLogAppender) {
+
+        // TODO: survey existing pods, see if
+        // any is idle and matches this cluster profile and elastic profile
+        // if so, don't create a pod
+
+        List<KubernetesInstance> reusablePods = findPodsEligibleForReuse(request, settings, pluginRequest, consoleLogAppender);
+        LOG.info(String.format("[Reuse] Found {0} pods eligible for reuse for CreateAgentRequest {1}", reusablePods.size(), request));
+
         JobIdentifier jobIdentifier = request.jobIdentifier();
         if (isAgentCreatedForJob(jobIdentifier.getJobId())) {
             String message = format("[Create Agent Request] Request for creating an agent for Job Identifier [{0}] has already been scheduled. Skipping current request.", jobIdentifier);
@@ -89,6 +129,7 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
             consoleLogAppender.accept(message);
             return null;
         }
+
 
         KubernetesClient client = factory.client(settings);
         KubernetesInstance instance = kubernetesInstanceFactory.create(request, settings, client, pluginRequest);

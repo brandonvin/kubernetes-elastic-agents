@@ -40,6 +40,8 @@ public class ShouldAssignWorkRequestExecutor implements RequestExecutor {
     public GoPluginApiResponse execute() {
         KubernetesInstance pod = agentInstances.find(request.agent().elasticAgentId());
 
+        // If pod is null, it means this plugin didn't create that agent!
+        // Or, the plugin just started up and hasn't yet refreshed its view of the pods.
         if (pod == null) {
             return DefaultGoPluginApiResponse.success("false");
         }
@@ -49,7 +51,19 @@ public class ShouldAssignWorkRequestExecutor implements RequestExecutor {
             return DefaultGoPluginApiResponse.success("true");
         }
 
-        LOG.debug(format("[should-assign-work] Job with identifier {0} can not be assigned to an agent {1}.", request.jobIdentifier(), pod.name()));
+        String podClusterId = pod.getInstanceProperties().getOrDefault("gocd/cluster-profile-id", "unknown");
+        boolean matchClusterProfile = request.clusterProfileProperties().uuid().equals(podClusterId);
+        String podElasticProfileId = pod.getInstanceProperties().getOrDefault("gocd/elastic-profile-id", "unknown");
+        boolean matchElasticProfile = ("" + request.properties().hashCode()).equals(podElasticProfileId);
+        if (matchClusterProfile && matchElasticProfile) {
+            LOG.info(String.format("[Reuse] Reusing existing KubernetesInstance (pod) {} for job {}", pod, request));
+            return DefaultGoPluginApiResponse.success("true");
+        }
+
+        LOG.info(String.format("[should-assign-work] No KubernetesInstance (pod) can handle job {}", request));
         return DefaultGoPluginApiResponse.success("false");
+
+        //LOG.debug(format("[should-assign-work] Job with identifier {0} can not be assigned to an agent {1}.", request.jobIdentifier(), pod.name()));
+        //return DefaultGoPluginApiResponse.success("false");
     }
 }

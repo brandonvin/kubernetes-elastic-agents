@@ -40,10 +40,19 @@ public class JobCompletionRequestExecutor implements RequestExecutor {
 
     @Override
     public GoPluginApiResponse execute() throws Exception {
+
+        // TODO: no-op and let the agent expire through idle-timeout
+
         ClusterProfileProperties clusterProfileProperties = jobCompletionRequest.clusterProfileProperties();
 
         String elasticAgentId = jobCompletionRequest.getElasticAgentId();
 
+        KubernetesInstance instance = agentInstances.find(elasticAgentId);
+        if (instance != null) {
+            instance.setAgentState(KubernetesInstance.AgentState.Idle);
+        }
+
+        /*
         Agent agent = new Agent();
         agent.setElasticAgentId(elasticAgentId);
 
@@ -53,6 +62,7 @@ public class JobCompletionRequestExecutor implements RequestExecutor {
         pluginRequest.disableAgents(agents);
         agentInstances.terminate(agent.elasticAgentId(), clusterProfileProperties);
         pluginRequest.deleteAgents(agents);
+         */
 
         return DefaultGoPluginApiResponse.success("");
     }
