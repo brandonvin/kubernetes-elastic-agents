@@ -112,7 +112,7 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
                   podClusterProfileId, podElasticProfileId);
             }
 
-            boolean sameClusterProfile = podClusterProfileId.equals(podClusterProfileId);
+            boolean sameClusterProfile = podClusterProfileId.equals(jobClusterProfileId);
             boolean sameElasticProfile = podElasticProfileId.equals(jobElasticProfileId);
 
             // TODO: guard against pod state as well - e.g. pending, terminating?
