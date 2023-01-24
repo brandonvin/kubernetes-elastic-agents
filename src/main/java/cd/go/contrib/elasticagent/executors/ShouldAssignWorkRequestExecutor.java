@@ -48,19 +48,34 @@ public class ShouldAssignWorkRequestExecutor implements RequestExecutor {
 
         if (request.jobIdentifier().getJobId().equals(pod.jobId())) {
             LOG.debug(format("[should-assign-work] Job with identifier {0} can be assigned to an agent {1}.", request.jobIdentifier(), pod.name()));
+            pod.setAgentState(KubernetesInstance.AgentState.Building);
             return DefaultGoPluginApiResponse.success("true");
         }
 
+        Long jobId = request.jobIdentifier().getJobId();
+
+        String jobClusterId = request.clusterProfileProperties().uuid();
         String podClusterId = pod.getInstanceProperties().getOrDefault("gocd/cluster-profile-id", "unknown");
-        boolean matchClusterProfile = request.clusterProfileProperties().uuid().equals(podClusterId);
+        boolean matchClusterProfile = jobClusterId.equals(podClusterId);
+
+        String jobElasticProfileId = Integer.toHexString(request.properties().hashCode());
         String podElasticProfileId = pod.getInstanceProperties().getOrDefault("gocd/elastic-profile-id", "unknown");
-        boolean matchElasticProfile = ("" + request.properties().hashCode()).equals(podElasticProfileId);
+        boolean matchElasticProfile = jobElasticProfileId.equals(podElasticProfileId);
+
+        LOG.info("[reuse] Should assign work? jobId={} has clusterProfileId={}, elasticProfileId={}; pod {} has clusterProfileId={}, elasticProfileId={}",
+              jobId,
+              request.clusterProfileProperties().uuid(),
+              Integer.toHexString(request.properties().hashCode()),
+              pod.name(),
+              podClusterId,
+              podElasticProfileId);
         if (matchClusterProfile && matchElasticProfile) {
-            LOG.info(String.format("[Reuse] Reusing existing KubernetesInstance (pod) {} for job {}", pod, request));
+            LOG.info("[reuse] Reusing existing pod {} for job {}", pod.name(), request);
+            pod.setAgentState(KubernetesInstance.AgentState.Building);
             return DefaultGoPluginApiResponse.success("true");
         }
 
-        LOG.info(String.format("[should-assign-work] No KubernetesInstance (pod) can handle job {}", request));
+        LOG.info(String.format("[should-assign-work] No KubernetesInstance can handle request %s", request));
         return DefaultGoPluginApiResponse.success("false");
 
         //LOG.debug(format("[should-assign-work] Job with identifier {0} can not be assigned to an agent {1}.", request.jobIdentifier(), pod.name()));

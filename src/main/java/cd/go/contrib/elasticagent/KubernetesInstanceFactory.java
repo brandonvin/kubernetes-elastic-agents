@@ -51,7 +51,6 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 public class KubernetesInstanceFactory {
     public KubernetesInstance create(CreateAgentRequest request, PluginSettings settings, KubernetesClient client, PluginRequest pluginRequest) {
         String podSpecType = request.properties().get(POD_SPEC_TYPE.getKey());
-        // TODO: annotate pod with hash or id cluster profile and of elastic profile?
         if (podSpecType != null) {
             switch (podSpecType) {
                 case "properties":
@@ -147,8 +146,12 @@ public class KubernetesInstanceFactory {
         existingAnnotations.putAll(request.properties());
         existingAnnotations.put(JOB_IDENTIFIER_LABEL_KEY, request.jobIdentifier().toJson());
         // TODO: refactoring
-        existingAnnotations.put("gocd/cluster-profile-id", request.clusterProfileProperties().uuid());
-        existingAnnotations.put("gocd/elastic-profile-id", "" + request.properties().hashCode());
+        String clusterProfileId = request.clusterProfileProperties().uuid();
+        String elasticProfileId = Integer.toHexString(request.properties().hashCode());
+        LOG.debug("[reuse] Annotating newly-created pod {} with clusterProfileId={}, elasticProfileId={}",
+            pod.getMetadata().getName(), clusterProfileId, elasticProfileId);
+        existingAnnotations.put("gocd/cluster-profile-id", clusterProfileId);
+        existingAnnotations.put("gocd/elastic-profile-id", elasticProfileId);
         pod.getMetadata().setAnnotations(existingAnnotations);
     }
 

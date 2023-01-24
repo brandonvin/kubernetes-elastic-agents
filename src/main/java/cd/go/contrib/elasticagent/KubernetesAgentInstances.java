@@ -28,10 +28,13 @@ import org.joda.time.Period;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
+import java.util.stream.Collectors;
 
 import static cd.go.contrib.elasticagent.KubernetesPlugin.LOG;
 import static cd.go.contrib.elasticagent.utils.Util.getSimpleDateFormat;
@@ -59,7 +62,7 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
     }
 
     @Override
-    public KubernetesInstance create(CreateAgentRequest request, PluginSettings settings, PluginRequest pluginRequest, ConsoleLogAppender consoleLogAppender) {
+    public Optional<KubernetesInstance> createIfNecessary(CreateAgentRequest request, PluginSettings settings, PluginRequest pluginRequest, ConsoleLogAppender consoleLogAppender) {
         final Integer maxAllowedPods = settings.getMaxPendingPods();
         synchronized (instances) {
             refreshAll(settings);
@@ -85,9 +88,11 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
     private List<KubernetesInstance> findPodsEligibleForReuse(
         CreateAgentRequest request,
         PluginSettings settings,
-        PluginRequest pluginRequest,
-        ConsoleLogAppender consoleLogAppender) {
+        PluginRequest pluginRequest) {
+
         Long jobId = request.jobIdentifier().getJobId();
+        String jobClusterProfileId = request.clusterProfileProperties().uuid();
+        String jobElasticProfileId = Integer.toHexString(request.properties().hashCode());
 
         List<KubernetesInstance> eligiblePods = new ArrayList<>();
 
@@ -97,14 +102,35 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
                 continue;
             }
 
-            // TODO: existing pod matches this - cluster profile matches, elastic profile matches
-            // TODO: and is idle
-            boolean sameElasticProfile = request.properties().equals(
-                    instance.getInstanceProperties().getOrDefault("gocd/elastic-profile-id", "unknown"));
-            boolean sameClusterProfile = request.clusterProfileProperties().uuid().equals(
-                    instance.getInstanceProperties().getOrDefault("gocd/cluster-profile-id", "unknown"));
+            // TODO: refactor
+            String podClusterProfileId = instance.getInstanceProperties().getOrDefault("gocd/cluster-profile-id", "unknown");
+            String podElasticProfileId = instance.getInstanceProperties().getOrDefault("gocd/elastic-profile-id", "unknown");
+
+            if (podClusterProfileId.equals("unknown") || podElasticProfileId.equals("unknown")) {
+                LOG.debug("[reuse] Pod {} is missing one of cluster profile ID or elastic profile ID ({}, {})",
+                  instance.name(),
+                  podClusterProfileId, podElasticProfileId);
+            }
+
+            boolean sameClusterProfile = podClusterProfileId.equals(podClusterProfileId);
+            boolean sameElasticProfile = podElasticProfileId.equals(jobElasticProfileId);
+
+            // TODO: guard against pod state as well - e.g. pending, terminating?
+            // TODO: only reuse if pod is running?
             boolean instanceIsIdle = instance.getAgentState().equals(KubernetesInstance.AgentState.Idle);
-            if (sameElasticProfile && sameClusterProfile && instanceIsIdle) {
+            boolean isReusable = sameElasticProfile && sameClusterProfile && instanceIsIdle;
+
+            LOG.info("[reuse] Pod eligible for reuse? {}. jobId={} has clusterProfileId={}, elasticProfileId={}; pod {} is in state {} with clusterProfileId={}, elasticProfileId={}",
+                  isReusable ? "Yes" : "No",
+                  jobId,
+                  jobClusterProfileId,
+                  jobElasticProfileId,
+                  instance.name(),
+                  instance.getAgentState(),
+                  podClusterProfileId,
+                  podElasticProfileId);
+
+            if (isReusable) {
                 eligiblePods.add(instance);
             }
         }
@@ -113,31 +139,39 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
     }
 
 
-    private KubernetesInstance createKubernetesInstance(CreateAgentRequest request, PluginSettings settings, PluginRequest pluginRequest, ConsoleLogAppender consoleLogAppender) {
-
-        // TODO: survey existing pods, see if
-        // any is idle and matches this cluster profile and elastic profile
-        // if so, don't create a pod
-
-        List<KubernetesInstance> reusablePods = findPodsEligibleForReuse(request, settings, pluginRequest, consoleLogAppender);
-        LOG.info(String.format("[Reuse] Found {0} pods eligible for reuse for CreateAgentRequest {1}", reusablePods.size(), request));
-
+    private Optional<KubernetesInstance> createKubernetesInstance(CreateAgentRequest request, PluginSettings settings, PluginRequest pluginRequest, ConsoleLogAppender consoleLogAppender) {
         JobIdentifier jobIdentifier = request.jobIdentifier();
+
+        List<KubernetesInstance> reusablePods = findPodsEligibleForReuse(request, settings, pluginRequest);
+        LOG.info("[reuse] Found {} pods eligible for reuse for CreateAgentRequest for job {}: {}",
+              reusablePods.size(),
+              jobIdentifier.getJobId(),
+              reusablePods.stream().map(pod -> pod.name()).collect(Collectors.toList()));
+
         if (isAgentCreatedForJob(jobIdentifier.getJobId())) {
             String message = format("[Create Agent Request] Request for creating an agent for Job Identifier [{0}] has already been scheduled. Skipping current request.", jobIdentifier);
             LOG.warn(message);
             consoleLogAppender.accept(message);
-            return null;
+            return Optional.empty();
         }
 
-
-        KubernetesClient client = factory.client(settings);
-        KubernetesInstance instance = kubernetesInstanceFactory.create(request, settings, client, pluginRequest);
-        consoleLogAppender.accept(String.format("Creating pod: %s", instance.name()));
-        register(instance);
-        consoleLogAppender.accept(String.format("Agent pod %s created. Waiting for it to register to the GoCD server.", instance.name()));
-
-        return instance;
+        if (reusablePods.isEmpty()) {
+            KubernetesClient client = factory.client(settings);
+            KubernetesInstance instance = kubernetesInstanceFactory.create(request, settings, client, pluginRequest);
+            consoleLogAppender.accept(String.format("Created pod: %s", instance.name()));
+            instance.setAgentState(KubernetesInstance.AgentState.Building);
+            register(instance);
+            consoleLogAppender.accept(String.format("Agent pod %s created. Waiting for it to register to the GoCD server.", instance.name()));
+            return Optional.of(instance);
+        } else {
+            String message = String.format(
+                "[reuse] Not creating a new pod - found %s eligible for reuse.",
+                reusablePods.size()
+            );
+            consoleLogAppender.accept(message);
+            LOG.info(message);
+            return Optional.empty();
+        }
     }
 
     private boolean isAgentCreatedForJob(Long jobId) {
@@ -197,7 +231,7 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
         PodList list = null;
         try {
             KubernetesClient client = factory.client(properties);
-            list = client.pods().list();
+            list = client.pods().withLabel(Constants.KUBERNETES_POD_KIND_LABEL_KEY, Constants.KUBERNETES_POD_KIND_LABEL_VALUE).list();
         } catch (Exception e) {
             LOG.error("Error occurred while trying to list kubernetes pods:", e);
 
@@ -205,7 +239,7 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
                 LOG.error("Error caused due to SocketTimeoutException. This generally happens due to stale kubernetes client. Clearing out existing kubernetes client and creating a new one!");
                 factory.clearOutExistingClient();
                 KubernetesClient client = factory.client(properties);
-                list = client.pods().list();
+                list = client.pods().withLabel(Constants.KUBERNETES_POD_KIND_LABEL_KEY, Constants.KUBERNETES_POD_KIND_LABEL_VALUE).list();
             }
         }
 
@@ -214,14 +248,21 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
             return;
         }
 
+        // TODO: needs to persist Idle state written by JobCompletionRequest
+        Map<String, KubernetesInstance> oldInstances = new HashMap<>(instances);
         instances.clear();
+
         for (Pod pod : list.getItems()) {
-            Map<String, String> podLabels = pod.getMetadata().getLabels();
-            if (podLabels != null) {
-                if (StringUtils.equals(Constants.KUBERNETES_POD_KIND_LABEL_VALUE, podLabels.get(Constants.KUBERNETES_POD_KIND_LABEL_KEY))) {
-                    register(kubernetesInstanceFactory.fromKubernetesPod(pod));
-                }
+            String podName = pod.getMetadata().getName();
+            // preserve pod's agent state
+            KubernetesInstance newInstance = kubernetesInstanceFactory.fromKubernetesPod(pod);
+            KubernetesInstance oldInstance = oldInstances.get(podName);
+            if (oldInstance != null) {
+                KubernetesInstance.AgentState oldAgentState = oldInstances.get(podName).getAgentState();
+                newInstance.setAgentState(oldAgentState);
+                LOG.debug("[reuse] Preserved AgentState {} upon refresh of pod {}", oldAgentState, podName);
             }
+            register(newInstance);
         }
 
         LOG.info(String.format("[refresh-pod-state] Pod information successfully synced. All(Running/Pending) pod count is %d.", instances.size()));

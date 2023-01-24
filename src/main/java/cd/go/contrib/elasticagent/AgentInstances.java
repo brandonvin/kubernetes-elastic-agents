@@ -19,6 +19,8 @@ package cd.go.contrib.elasticagent;
 import cd.go.contrib.elasticagent.executors.ServerPingRequestExecutor;
 import cd.go.contrib.elasticagent.requests.CreateAgentRequest;
 
+import java.util.Optional;
+
 
 /**
  * Plugin implementors should implement these methods to interface to your cloud.
@@ -36,7 +38,7 @@ public interface AgentInstances<T> {
      * @param pluginRequest the plugin request object
      * @param consoleLogAppender
      */
-    T create(CreateAgentRequest request, PluginSettings settings, PluginRequest pluginRequest, ConsoleLogAppender consoleLogAppender) throws Exception;
+    Optional<T> createIfNecessary(CreateAgentRequest request, PluginSettings settings, PluginRequest pluginRequest, ConsoleLogAppender consoleLogAppender) throws Exception;
 
     /**
      * This message is sent when the plugin needs to terminate the agent instance.

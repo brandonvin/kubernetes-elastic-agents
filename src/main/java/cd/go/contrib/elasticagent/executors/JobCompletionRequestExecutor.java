@@ -40,16 +40,19 @@ public class JobCompletionRequestExecutor implements RequestExecutor {
 
     @Override
     public GoPluginApiResponse execute() throws Exception {
-
-        // TODO: no-op and let the agent expire through idle-timeout
-
         ClusterProfileProperties clusterProfileProperties = jobCompletionRequest.clusterProfileProperties();
 
         String elasticAgentId = jobCompletionRequest.getElasticAgentId();
 
         KubernetesInstance instance = agentInstances.find(elasticAgentId);
         if (instance != null) {
+            LOG.debug("[reuse] Received job completion for agent ID {}. It is now marked idle.", elasticAgentId);
             instance.setAgentState(KubernetesInstance.AgentState.Idle);
+        } else {
+            // TODO: maybe just register the instance directly here?
+            // otherwise we'll it will be rediscovered later by refreshAll
+            // an put in an Unknown state.
+            LOG.debug("[reuse] Received job completion for agent ID {}, which is not known to this plugin.", elasticAgentId);
         }
 
         /*

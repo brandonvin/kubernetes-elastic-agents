@@ -34,9 +34,14 @@ public class KubernetesInstance {
     private AgentState agentState;
 
     public enum AgentState {
-        Unknown, // agent hasn't yet registered with the plugin
-        Idle, // agent has just finished work
-        Building, // agent has been assigned work
+        // Unknown means the agent hasn't yet been registered with the plugin.
+        // For example, if the GoCD server restarted while a pod was building,
+        // the state will be Unknown until the pod finishes its job.
+        Unknown,
+        // Idle means the agent has just finished a job.
+        Idle,
+        // Building means the agent has been assigned a job.
+        Building,
     }
 
     private final String name;
@@ -94,5 +99,18 @@ public class KubernetesInstance {
 
     public void setAgentState(AgentState newState) {
         this.agentState = newState;
+    }
+
+    @Override
+    public String toString() {
+      return "KubernetesInstance{"
+        + "createdAt=" + createdAt
+        + ", environment=" + environment
+        + ", name=" + name
+        + ", properties=" + properties
+        + ", jobId=" + jobId
+        + ", podState=" + state
+        + ", agentState=" + agentState
+        + "}";
     }
 }
