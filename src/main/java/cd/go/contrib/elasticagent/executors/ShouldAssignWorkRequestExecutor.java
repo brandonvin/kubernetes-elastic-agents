@@ -21,6 +21,7 @@ import cd.go.contrib.elasticagent.AgentInstances;
 import cd.go.contrib.elasticagent.KubernetesInstance;
 import cd.go.contrib.elasticagent.RequestExecutor;
 import cd.go.contrib.elasticagent.requests.ShouldAssignWorkRequest;
+import cd.go.contrib.elasticagent.utils.Util;
 import com.thoughtworks.go.plugin.api.response.DefaultGoPluginApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 
@@ -55,11 +56,11 @@ public class ShouldAssignWorkRequestExecutor implements RequestExecutor {
                 return instance.withAgentState(KubernetesInstance.AgentState.Building);
             }
 
-            String jobClusterProfileId = request.clusterProfileProperties().uuid();
+            String jobClusterProfileId = Util.objectUUID(request.clusterProfileProperties());
             String podClusterProfileId = instance.getPodAnnotations().getOrDefault(KubernetesInstance.CLUSTER_PROFILE_ID, "unknown");
             boolean matchClusterProfile = jobClusterProfileId.equals(podClusterProfileId);
 
-            String jobElasticProfileId = Integer.toHexString(request.elasticProfileProperties().hashCode());
+            String jobElasticProfileId = Util.objectUUID(request.elasticProfileProperties());
             String podElasticProfileId = instance.getPodAnnotations().getOrDefault(KubernetesInstance.ELASTIC_PROFILE_ID, "unknown");
             boolean matchElasticProfile = jobElasticProfileId.equals(podElasticProfileId);
 

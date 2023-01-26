@@ -19,6 +19,7 @@ package cd.go.contrib.elasticagent;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import java.util.Collections;
 import java.util.Map;
 
 /*
@@ -68,10 +69,25 @@ public class KubernetesInstance {
         this.createdAt = createdAt.withZone(DateTimeZone.UTC);
         this.environment = environment;
         this.podName = podName;
-        this.podAnnotations = Map.copyOf(podAnnotations);
+        this.podAnnotations = podAnnotations == null ? Collections.emptyMap() : Map.copyOf(podAnnotations);
         this.jobId = jobId;
         this.podState = podState;
         this.agentState = agentState;
+    }
+
+    public KubernetesInstance(DateTime createdAt,
+                              String environment,
+                              String podName,
+                              Map<String, String> podAnnotations,
+                              Long jobId,
+                              PodState podState) {
+        this.createdAt = createdAt.withZone(DateTimeZone.UTC);
+        this.environment = environment;
+        this.podName = podName;
+        this.podAnnotations = Map.copyOf(podAnnotations);
+        this.jobId = jobId;
+        this.podState = podState;
+        this.agentState = AgentState.Unknown;
     }
 
     public String getPodName() {

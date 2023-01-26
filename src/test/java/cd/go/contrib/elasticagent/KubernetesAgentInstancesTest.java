@@ -88,25 +88,25 @@ public class KubernetesAgentInstancesTest {
 
     @Test
     public void shouldCreateKubernetesPodUsingPodYamlAndCacheCreatedInstance() throws IOException {
-        KubernetesInstance kubernetesInstance = new KubernetesInstance(new DateTime(), "test", "test-agent", new HashMap<>(), 100L, PodState.Running);
+        KubernetesInstance kubernetesInstance = new KubernetesInstance(new DateTime(), "test", "test-agent", new HashMap<>(), 100L, PodState.Running, KubernetesInstance.AgentState.Unknown);
         when(mockKubernetesInstanceFactory.create(mockCreateAgentRequest, mockPluginSettings, mockKubernetesClient, mockPluginRequest)).
                 thenReturn(kubernetesInstance);
 
         testProperties.put("PodSpecType", "yaml");
 
         KubernetesAgentInstances agentInstances = new KubernetesAgentInstances(factory, mockKubernetesInstanceFactory);
-        KubernetesInstance instance = agentInstances.create(mockCreateAgentRequest, mockPluginSettings, mockPluginRequest, consoleLogAppender);
+        KubernetesInstance instance = agentInstances.createIfNecessary(mockCreateAgentRequest, mockPluginSettings, mockPluginRequest, consoleLogAppender).get();
         assertTrue(agentInstances.instanceExists(instance));
     }
 
     @Test
     public void shouldCreateKubernetesPodAndCacheCreatedInstance() throws IOException {
-        KubernetesInstance kubernetesInstance = new KubernetesInstance(new DateTime(), "test", "test-agent", new HashMap<>(), 100L, PodState.Running);
+        KubernetesInstance kubernetesInstance = new KubernetesInstance(new DateTime(), "test", "test-agent", new HashMap<>(), 100L, PodState.Running, KubernetesInstance.AgentState.Unknown);
         when(mockKubernetesInstanceFactory.create(mockCreateAgentRequest, mockPluginSettings, mockKubernetesClient, mockPluginRequest)).
                 thenReturn(kubernetesInstance);
         testProperties.put("PodSpecType", "properties");
         KubernetesAgentInstances agentInstances = new KubernetesAgentInstances(factory, mockKubernetesInstanceFactory);
-        KubernetesInstance instance = agentInstances.create(mockCreateAgentRequest, mockPluginSettings, mockPluginRequest, consoleLogAppender);
+        KubernetesInstance instance = agentInstances.createIfNecessary(mockCreateAgentRequest, mockPluginSettings, mockPluginRequest, consoleLogAppender).get();
         assertTrue(agentInstances.instanceExists(instance));
     }
 
@@ -117,7 +117,7 @@ public class KubernetesAgentInstancesTest {
                 thenReturn(kubernetesInstance);
         testProperties.put("PodSpecType", "remote");
         KubernetesAgentInstances agentInstances = new KubernetesAgentInstances(factory, mockKubernetesInstanceFactory);
-        KubernetesInstance instance = agentInstances.create(mockCreateAgentRequest, mockPluginSettings, mockPluginRequest, consoleLogAppender);
+        KubernetesInstance instance = agentInstances.createIfNecessary(mockCreateAgentRequest, mockPluginSettings, mockPluginRequest, consoleLogAppender).get();
         assertTrue(agentInstances.instanceExists(instance));
     }
 
@@ -131,7 +131,7 @@ public class KubernetesAgentInstancesTest {
         KubernetesAgentInstances agentInstances = new KubernetesAgentInstances(factory, mockKubernetesInstanceFactory);
         JobIdentifier jobId = new JobIdentifier("test", 1L, "Test pipeline", "test name", "1", "test job", 100L);
         when(mockCreateAgentRequest.jobIdentifier()).thenReturn(jobId);
-        agentInstances.create(mockCreateAgentRequest, mockPluginSettings, mockPluginRequest, consoleLogAppender);
+        agentInstances.createIfNecessary(mockCreateAgentRequest, mockPluginSettings, mockPluginRequest, consoleLogAppender).get();
         verify(mockKubernetesInstanceFactory, times(1)).create(any(), any(), any(), any());
         reset(mockKubernetesInstanceFactory);
 
@@ -147,7 +147,7 @@ public class KubernetesAgentInstancesTest {
         when(podList.getItems()).thenReturn(Arrays.asList(pod));
         when(mockKubernetesInstanceFactory.fromKubernetesPod(pod)).thenReturn(kubernetesInstance);
 
-        agentInstances.create(mockCreateAgentRequest, mockPluginSettings, mockPluginRequest, consoleLogAppender);
+        agentInstances.createIfNecessary(mockCreateAgentRequest, mockPluginSettings, mockPluginRequest, consoleLogAppender);
         verify(mockKubernetesInstanceFactory, times(0)).create(any(), any(), any(), any());
     }
 
@@ -166,7 +166,7 @@ public class KubernetesAgentInstancesTest {
         KubernetesAgentInstances agentInstances = new KubernetesAgentInstances(factory, mockKubernetesInstanceFactory);
         JobIdentifier jobId = new JobIdentifier("test", 1L, "Test pipeline", "test name", "1", "test job", 100L);
         when(mockCreateAgentRequest.jobIdentifier()).thenReturn(jobId);
-        agentInstances.create(mockCreateAgentRequest, mockPluginSettings, mockPluginRequest, consoleLogAppender);
+        agentInstances.createIfNecessary(mockCreateAgentRequest, mockPluginSettings, mockPluginRequest, consoleLogAppender).get();
         verify(mockKubernetesInstanceFactory, times(1)).create(any(), any(), any(), any());
         reset(mockKubernetesInstanceFactory);
 
@@ -183,10 +183,12 @@ public class KubernetesAgentInstancesTest {
         when(mockKubernetesInstanceFactory.fromKubernetesPod(pod)).thenReturn(kubernetesInstance);
 
         //second create agent request
-        agentInstances.create(mockCreateAgentRequest, mockPluginSettings, mockPluginRequest, consoleLogAppender);
+        agentInstances.createIfNecessary(mockCreateAgentRequest, mockPluginSettings, mockPluginRequest, consoleLogAppender);
         verify(mockKubernetesInstanceFactory, times(0)).create(any(), any(), any(), any());
     }
 
+    // TODO: plugin has been changed to only refreshAll on ping requests. Re-evaluute this test.
+    /*
     @Test
     public void shouldSyncPodsStateFromClusterBeforeCreatingPod() throws IOException {
         when(mockKubernetesInstanceFactory.create(mockCreateAgentRequest, mockPluginSettings, mockKubernetesClient, mockPluginRequest)).
@@ -194,10 +196,11 @@ public class KubernetesAgentInstancesTest {
 
         final KubernetesAgentInstances agentInstances = new KubernetesAgentInstances(factory, mockKubernetesInstanceFactory);
 
-        agentInstances.create(mockCreateAgentRequest, mockPluginSettings, mockPluginRequest, consoleLogAppender);
+        agentInstances.createIfNecessary(mockCreateAgentRequest, mockPluginSettings, mockPluginRequest, consoleLogAppender).get();
 
         InOrder inOrder = inOrder(mockKubernetesInstanceFactory, mockedOperation);
         inOrder.verify(mockedOperation).list();
         inOrder.verify(mockKubernetesInstanceFactory).create(mockCreateAgentRequest, mockPluginSettings, mockKubernetesClient, mockPluginRequest);
     }
+     */
 }
