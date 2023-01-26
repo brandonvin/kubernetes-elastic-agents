@@ -21,52 +21,29 @@ import cd.go.contrib.elasticagent.requests.JobCompletionRequest;
 import com.thoughtworks.go.plugin.api.response.DefaultGoPluginApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 
-import java.util.Arrays;
-import java.util.List;
-
 import static cd.go.contrib.elasticagent.KubernetesPlugin.LOG;
-import static java.text.MessageFormat.format;
 
 public class JobCompletionRequestExecutor implements RequestExecutor {
     private final JobCompletionRequest jobCompletionRequest;
     private final AgentInstances<KubernetesInstance> agentInstances;
-    private final PluginRequest pluginRequest;
 
-    public JobCompletionRequestExecutor(JobCompletionRequest jobCompletionRequest, AgentInstances<KubernetesInstance> agentInstances, PluginRequest pluginRequest) {
+    public JobCompletionRequestExecutor(JobCompletionRequest jobCompletionRequest,AgentInstances<KubernetesInstance> agentInstances) {
         this.jobCompletionRequest = jobCompletionRequest;
         this.agentInstances = agentInstances;
-        this.pluginRequest = pluginRequest;
     }
 
     @Override
     public GoPluginApiResponse execute() throws Exception {
-        ClusterProfileProperties clusterProfileProperties = jobCompletionRequest.clusterProfileProperties();
-
         String elasticAgentId = jobCompletionRequest.getElasticAgentId();
-
-        KubernetesInstance instance = agentInstances.find(elasticAgentId);
-        if (instance != null) {
-            LOG.debug("[reuse] Received job completion for agent ID {}. It is now marked idle.", elasticAgentId);
-            instance.setAgentState(KubernetesInstance.AgentState.Idle);
+        KubernetesInstance updated = agentInstances.updateAgentState(elasticAgentId, KubernetesInstance.AgentState.Idle);
+        if (updated != null) {
+            LOG.debug("[reuse] Received job completion for agent ID {}. It is now marked Idle.", elasticAgentId);
         } else {
-            // TODO: maybe just register the instance directly here?
-            // otherwise we'll it will be rediscovered later by refreshAll
-            // an put in an Unknown state.
+            // TODO: could register the instance here and put it in an idle state.
+            // Otherwise it will be rediscovered later by refreshAll
+            // and put in an Unknown state, and then terminated after a timeout.
             LOG.debug("[reuse] Received job completion for agent ID {}, which is not known to this plugin.", elasticAgentId);
         }
-
-        /*
-        Agent agent = new Agent();
-        agent.setElasticAgentId(elasticAgentId);
-
-        LOG.info(format("[Job Completion] Terminating elastic agent with id {0} on job completion {1}.", agent.elasticAgentId(), jobCompletionRequest.jobIdentifier()));
-
-        List<Agent> agents = Arrays.asList(agent);
-        pluginRequest.disableAgents(agents);
-        agentInstances.terminate(agent.elasticAgentId(), clusterProfileProperties);
-        pluginRequest.deleteAgents(agents);
-         */
-
         return DefaultGoPluginApiResponse.success("");
     }
 }

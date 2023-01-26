@@ -107,7 +107,7 @@ public class KubernetesAgentInstancesIntegrationTest {
 
         Container gocdAgentContainer = containers.get(0);
 
-        assertThat(gocdAgentContainer.getName()).isEqualTo(instance.name());
+        assertThat(gocdAgentContainer.getName()).isEqualTo(instance.getPodName());
 
         assertThat(gocdAgentContainer.getImage()).isEqualTo("gocd/custom-gocd-agent-alpine:latest");
         assertThat(gocdAgentContainer.getImagePullPolicy()).isEqualTo("IfNotPresent");
@@ -116,7 +116,7 @@ public class KubernetesAgentInstancesIntegrationTest {
 
     @Test
     public void shouldCreateKubernetesPodWithPrivilegedMod() {
-        createAgentRequest.properties().put(PRIVILEGED.getKey(), "true");
+        createAgentRequest.elasticProfileProperties().put(PRIVILEGED.getKey(), "true");
         ArgumentCaptor<Pod> argumentCaptor = ArgumentCaptor.forClass(Pod.class);
         KubernetesInstance instance = kubernetesAgentInstances.create(createAgentRequest, settings, mockedPluginRequest, consoleLogAppender);
         verify(pods).create(argumentCaptor.capture());
@@ -127,7 +127,7 @@ public class KubernetesAgentInstancesIntegrationTest {
 
         Container gocdAgentContainer = containers.get(0);
 
-        assertThat(gocdAgentContainer.getName()).isEqualTo(instance.name());
+        assertThat(gocdAgentContainer.getName()).isEqualTo(instance.getPodName());
         assertThat(gocdAgentContainer.getSecurityContext().getPrivileged()).isEqualTo(true);
     }
 
@@ -158,7 +158,7 @@ public class KubernetesAgentInstancesIntegrationTest {
         Pod elasticAgentPod = argumentCaptor.getValue();
 
         assertNotNull(elasticAgentPod.getMetadata());
-        assertThat(elasticAgentPod.getMetadata().getName()).isEqualTo(instance.name());
+        assertThat(elasticAgentPod.getMetadata().getName()).isEqualTo(instance.getPodName());
     }
 
     @Test
@@ -188,7 +188,7 @@ public class KubernetesAgentInstancesIntegrationTest {
 
         expectedEnvVars.add(new EnvVar("GO_EA_AUTO_REGISTER_KEY", createAgentRequest.autoRegisterKey(), null));
         expectedEnvVars.add(new EnvVar("GO_EA_AUTO_REGISTER_ENVIRONMENT", createAgentRequest.environment(), null));
-        expectedEnvVars.add(new EnvVar("GO_EA_AUTO_REGISTER_ELASTIC_AGENT_ID", instance.name(), null));
+        expectedEnvVars.add(new EnvVar("GO_EA_AUTO_REGISTER_ELASTIC_AGENT_ID", instance.getPodName(), null));
         expectedEnvVars.add(new EnvVar("GO_EA_AUTO_REGISTER_ELASTIC_PLUGIN_ID", Constants.PLUGIN_ID, null));
 
         List<Container> containers = elasticAgentPod.getSpec().getContainers();
@@ -207,7 +207,7 @@ public class KubernetesAgentInstancesIntegrationTest {
         assertNotNull(elasticAgentPod.getMetadata());
 
         Map<String, String> expectedAnnotations = new HashMap<>();
-        expectedAnnotations.putAll(createAgentRequest.properties());
+        expectedAnnotations.putAll(createAgentRequest.elasticProfileProperties());
         expectedAnnotations.put(Constants.JOB_IDENTIFIER_LABEL_KEY, new Gson().toJson(createAgentRequest.jobIdentifier()));
         assertThat(elasticAgentPod.getMetadata().getAnnotations()).isEqualTo(expectedAnnotations);
     }
@@ -272,7 +272,7 @@ public class KubernetesAgentInstancesIntegrationTest {
         assertNotNull(elasticAgentPod.getMetadata());
         assertThat(elasticAgentPod.getMetadata().getName()).contains("test-pod-yaml");
 
-        assertThat(elasticAgentPod.getMetadata().getName()).isEqualTo(instance.name());
+        assertThat(elasticAgentPod.getMetadata().getName()).isEqualTo(instance.getPodName());
     }
 
     @Test
@@ -304,7 +304,7 @@ public class KubernetesAgentInstancesIntegrationTest {
         expectedEnvVars.add(new EnvVar("GO_EA_SERVER_URL", settings.getGoServerUrl(), null));
         expectedEnvVars.add(new EnvVar("GO_EA_AUTO_REGISTER_KEY", createAgentRequest.autoRegisterKey(), null));
         expectedEnvVars.add(new EnvVar("GO_EA_AUTO_REGISTER_ENVIRONMENT", createAgentRequest.environment(), null));
-        expectedEnvVars.add(new EnvVar("GO_EA_AUTO_REGISTER_ELASTIC_AGENT_ID", instance.name(), null));
+        expectedEnvVars.add(new EnvVar("GO_EA_AUTO_REGISTER_ELASTIC_AGENT_ID", instance.getPodName(), null));
         expectedEnvVars.add(new EnvVar("GO_EA_AUTO_REGISTER_ELASTIC_PLUGIN_ID", Constants.PLUGIN_ID, null));
 
         List<Container> containers = elasticAgentPod.getSpec().getContainers();
@@ -325,7 +325,7 @@ public class KubernetesAgentInstancesIntegrationTest {
         assertNotNull(elasticAgentPod.getMetadata());
 
         HashMap<String, String> expectedAnnotations = new HashMap<>();
-        expectedAnnotations.putAll(createAgentRequest.properties());
+        expectedAnnotations.putAll(createAgentRequest.elasticProfileProperties());
         expectedAnnotations.put("annotation-key", "my-fancy-annotation-value");
         expectedAnnotations.put(Constants.JOB_IDENTIFIER_LABEL_KEY, new Gson().toJson(createAgentRequest.jobIdentifier()));
 
@@ -396,7 +396,7 @@ public class KubernetesAgentInstancesIntegrationTest {
         assertNotNull(elasticAgentPod.getMetadata());
         assertThat(elasticAgentPod.getMetadata().getName()).contains("test-pod-json");
 
-        assertThat(elasticAgentPod.getMetadata().getName()).isEqualTo(instance.name());
+        assertThat(elasticAgentPod.getMetadata().getName()).isEqualTo(instance.getPodName());
     }
 
     @Test
@@ -428,7 +428,7 @@ public class KubernetesAgentInstancesIntegrationTest {
         expectedEnvVars.add(new EnvVar("GO_EA_SERVER_URL", settings.getGoServerUrl(), null));
         expectedEnvVars.add(new EnvVar("GO_EA_AUTO_REGISTER_KEY", createAgentRequest.autoRegisterKey(), null));
         expectedEnvVars.add(new EnvVar("GO_EA_AUTO_REGISTER_ENVIRONMENT", createAgentRequest.environment(), null));
-        expectedEnvVars.add(new EnvVar("GO_EA_AUTO_REGISTER_ELASTIC_AGENT_ID", instance.name(), null));
+        expectedEnvVars.add(new EnvVar("GO_EA_AUTO_REGISTER_ELASTIC_AGENT_ID", instance.getPodName(), null));
         expectedEnvVars.add(new EnvVar("GO_EA_AUTO_REGISTER_ELASTIC_PLUGIN_ID", Constants.PLUGIN_ID, null));
 
         List<Container> containers = elasticAgentPod.getSpec().getContainers();
@@ -449,7 +449,7 @@ public class KubernetesAgentInstancesIntegrationTest {
         assertNotNull(elasticAgentPod.getMetadata());
 
         HashMap<String, String> expectedAnnotations = new HashMap<>();
-        expectedAnnotations.putAll(createAgentRequest.properties());
+        expectedAnnotations.putAll(createAgentRequest.elasticProfileProperties());
         expectedAnnotations.put("annotation-key", "my-fancy-annotation-value");
         expectedAnnotations.put(Constants.JOB_IDENTIFIER_LABEL_KEY, new Gson().toJson(createAgentRequest.jobIdentifier()));
 

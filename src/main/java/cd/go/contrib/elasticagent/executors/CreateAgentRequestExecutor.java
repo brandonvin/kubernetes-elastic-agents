@@ -42,7 +42,7 @@ public class CreateAgentRequestExecutor implements RequestExecutor {
 
     @Override
     public GoPluginApiResponse execute() throws Exception {
-        LOG.debug(format("[Create Agent] creating elastic agent for profile {0} in cluster {1}", request.properties(), request.clusterProfileProperties()));
+        LOG.debug(format("[Create Agent] creating elastic agent for profile {0} in cluster {1}", request.elasticProfileProperties(), request.clusterProfileProperties()));
         ConsoleLogAppender consoleLogAppender = text -> {
             final String message = String.format("%s %s\n", LocalTime.now().toString(MESSAGE_PREFIX_FORMATTER), text);
             pluginRequest.appendToConsoleLog(request.jobIdentifier(), message);

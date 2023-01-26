@@ -20,6 +20,8 @@ import cd.go.contrib.elasticagent.executors.ServerPingRequestExecutor;
 import cd.go.contrib.elasticagent.requests.CreateAgentRequest;
 
 import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 
 /**
@@ -86,5 +88,16 @@ public interface AgentInstances<T> {
      * @param agentId the elastic agent id
      */
     T find(String agentId);
+
+    /**
+     * Atomically updates the agent state of the specified <code>agentId</code>
+     * in the store, if it exists.
+     *
+     * @param agentId the elastic agent id
+     * @return the updated instance, or null if it did not exist
+     */
+    T updateAgentState(String agentId, KubernetesInstance.AgentState newAgentState);
+
+    T compute(String agentId, BiFunction<String, T, T> computeFn);
 }
 

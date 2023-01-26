@@ -75,7 +75,7 @@ public class KubernetesAgentInstancesTest {
     public void setUp() {
         openMocks(this);
         testProperties = new HashMap<>();
-        when(mockCreateAgentRequest.properties()).thenReturn(testProperties);
+        when(mockCreateAgentRequest.elasticProfileProperties()).thenReturn(testProperties);
         when(mockPluginSettings.getMaxPendingPods()).thenReturn(10);
         when(factory.client(mockPluginSettings)).thenReturn(mockKubernetesClient);
         JobIdentifier jobId = new JobIdentifier("test", 1L, "Test pipeline", "test name", "1", "test job", 100L);

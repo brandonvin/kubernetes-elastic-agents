@@ -48,7 +48,7 @@ public class ServerPingRequestExecutor implements RequestExecutor {
             performCleanupForACluster(clusterProfileProperties, clusterSpecificAgentInstances.get(clusterProfileProperties.uuid()));
         }
 
-        CheckForPossiblyMissingAgents();
+        checkForPossiblyMissingAgents();
         return DefaultGoPluginApiResponse.success("");
     }
 
@@ -63,7 +63,7 @@ public class ServerPingRequestExecutor implements RequestExecutor {
         kubernetesAgentInstances.terminateUnregisteredInstances(clusterProfileProperties, allAgents);
     }
 
-    private void CheckForPossiblyMissingAgents() throws Exception {
+    private void checkForPossiblyMissingAgents() throws Exception {
         Collection<Agent> allAgents = pluginRequest.listAgents().agents();
 
         List<Agent> missingAgents = allAgents.stream().filter(agent -> clusterSpecificAgentInstances.values().stream()

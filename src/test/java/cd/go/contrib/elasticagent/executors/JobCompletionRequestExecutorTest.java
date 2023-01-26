@@ -57,7 +57,7 @@ public class JobCompletionRequestExecutorTest {
         ClusterProfileProperties clusterProfileProperties = new ClusterProfileProperties();
         String elasticAgentId = "agent-1";
         JobCompletionRequest request = new JobCompletionRequest(elasticAgentId, jobIdentifier, new HashMap<>(), clusterProfileProperties);
-        JobCompletionRequestExecutor executor = new JobCompletionRequestExecutor(request, mockAgentInstances, mockPluginRequest);
+        JobCompletionRequestExecutor executor = new JobCompletionRequestExecutor(request, mockAgentInstances);
 
         GoPluginApiResponse response = executor.execute();
 

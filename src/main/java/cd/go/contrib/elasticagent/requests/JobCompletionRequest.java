@@ -64,8 +64,8 @@ public class JobCompletionRequest {
         return jobIdentifier;
     }
 
-    public RequestExecutor executor(AgentInstances<KubernetesInstance> agentInstances, PluginRequest pluginRequest) {
-        return new JobCompletionRequestExecutor(this, agentInstances, pluginRequest);
+    public RequestExecutor executor(AgentInstances<KubernetesInstance> agentInstances) {
+        return new JobCompletionRequestExecutor(this, agentInstances);
     }
 
     public Map<String, String> properties() {

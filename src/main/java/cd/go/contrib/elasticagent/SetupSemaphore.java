@@ -16,10 +16,13 @@
 
 package cd.go.contrib.elasticagent;
 
+import io.fabric8.kubernetes.api.model.Pod;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
+import java.util.stream.Collectors;
 
 class SetupSemaphore implements Runnable {
     private final Integer maxAllowedPendingPods;
@@ -52,13 +55,10 @@ class SetupSemaphore implements Runnable {
     }
 
     private List<KubernetesInstance> getPendingInstances(Map<String, KubernetesInstance> instances) {
-        ArrayList<KubernetesInstance> pendingInstances = new ArrayList<>();
-        for (KubernetesInstance kubernetesInstance : instances.values()) {
-            if (kubernetesInstance.isPending()) {
-                pendingInstances.add(kubernetesInstance);
-            }
-        }
-
-        return pendingInstances;
+        return instances
+                .values()
+                .stream()
+                .filter(instance -> instance.getPodState().equals(PodState.Pending))
+                .collect(Collectors.toList());
     }
 }
