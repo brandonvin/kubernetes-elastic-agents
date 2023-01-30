@@ -20,8 +20,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.NonNull;
 import lombok.Builder;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import java.util.Collections;
 import java.util.Map;
@@ -33,23 +31,6 @@ import java.time.Instant;
 @Value
 @Builder(toBuilder = true)
 public class KubernetesInstance {
-
-    public static KubernetesInstance of(Instant createdAt,
-    String environment,
-    String podName,
-    Map<String, String> podAnnotations,
-    long jobId,
-    PodState podState) {
-        return KubernetesInstance.builder()
-                .createdAt(createdAt)
-                .environment(environment)
-                .podName(podName)
-                .podAnnotations(podAnnotations)
-                .jobId(jobId)
-                .podState(podState)
-                .build();
-    }
-
     public enum AgentState {
         // Unknown means the agent hasn't yet been registered with the plugin.
         // For example, if the GoCD server restarted while a pod was building,
@@ -91,8 +72,12 @@ public class KubernetesInstance {
     AgentState agentState = AgentState.Unknown;
 
     public static class KubernetesInstanceBuilder {
-        public KubernetesInstanceBuilder podAnnotations(@NonNull Map<String, String> podAnnotations) {
-            this.podAnnotations$value = Map.copyOf(podAnnotations);
+        public KubernetesInstanceBuilder podAnnotations(Map<String, String> podAnnotations) {
+            if (podAnnotations == null) {
+                this.podAnnotations$value = Collections.emptyMap();
+            } else {
+                this.podAnnotations$value = Map.copyOf(podAnnotations);
+            }
             this.podAnnotations$set = true;
             return this;
         }

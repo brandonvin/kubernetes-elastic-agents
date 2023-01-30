@@ -87,7 +87,7 @@ public class KubernetesAgentInstancesTest {
 
     @Test
     public void shouldCreateKubernetesPodUsingPodYamlAndCacheCreatedInstance() throws IOException {
-        KubernetesInstance kubernetesInstance = KubernetesInstance.of(Instant.now(), "test", "test-agent", new HashMap<>(), 100L, PodState.Running);
+        KubernetesInstance kubernetesInstance = KubernetesInstance.builder().environment("test").podName("test-agent").jobId(100L).podState(PodState.Running).build();
         when(mockKubernetesInstanceFactory.create(mockCreateAgentRequest, mockPluginSettings, mockKubernetesClient, mockPluginRequest)).
                 thenReturn(kubernetesInstance);
 
@@ -100,7 +100,7 @@ public class KubernetesAgentInstancesTest {
 
     @Test
     public void shouldCreateKubernetesPodAndCacheCreatedInstance() throws IOException {
-        KubernetesInstance kubernetesInstance = KubernetesInstance.of(Instant.now(), "test", "test-agent", new HashMap<>(), 100L, PodState.Running);
+        KubernetesInstance kubernetesInstance = KubernetesInstance.builder().environment("test").podName("test-agent").jobId(100L).podState(PodState.Running).build();
         when(mockKubernetesInstanceFactory.create(mockCreateAgentRequest, mockPluginSettings, mockKubernetesClient, mockPluginRequest)).
                 thenReturn(kubernetesInstance);
         testProperties.put("PodSpecType", "properties");
@@ -111,7 +111,7 @@ public class KubernetesAgentInstancesTest {
 
     @Test
     public void shouldCreateKubernetesPodFromFileAndCacheCreatedInstance() throws IOException {
-        KubernetesInstance kubernetesInstance = KubernetesInstance.of(Instant.now(), "test", "test-agent", new HashMap<>(), 100L, PodState.Running);
+        KubernetesInstance kubernetesInstance = KubernetesInstance.builder().environment("test").podName("test-agent").jobId(100L).podState(PodState.Running).build();
         when(mockKubernetesInstanceFactory.create(mockCreateAgentRequest, mockPluginSettings, mockKubernetesClient, mockPluginRequest)).
                 thenReturn(kubernetesInstance);
         testProperties.put("PodSpecType", "remote");
@@ -122,7 +122,7 @@ public class KubernetesAgentInstancesTest {
 
     @Test
     public void shouldNotCreatePodWhenOutstandingRequestsExistForJobs() throws IOException {
-        KubernetesInstance kubernetesInstance = KubernetesInstance.of(Instant.now(), "test", "test-agent", new HashMap<>(), 100L, PodState.Running);
+        KubernetesInstance kubernetesInstance = KubernetesInstance.builder().environment("test").podName("test-agent").jobId(100L).podState(PodState.Running).build();
         when(mockKubernetesInstanceFactory.create(mockCreateAgentRequest, mockPluginSettings, mockKubernetesClient, mockPluginRequest)).
                 thenReturn(kubernetesInstance);
         testProperties.put("PodSpecType", "properties");
@@ -156,7 +156,7 @@ public class KubernetesAgentInstancesTest {
         when(mockPluginSettings.getMaxPendingPods()).thenReturn(1);
 
         //pending kubernetes pod
-        KubernetesInstance kubernetesInstance = KubernetesInstance.of(Instant.now(), "test", "test-agent", new HashMap<>(), 100L, PodState.Pending);
+        KubernetesInstance kubernetesInstance = KubernetesInstance.builder().environment("test").podName("test-agent").jobId(100L).podState(PodState.Running).build();
         when(mockKubernetesInstanceFactory.create(mockCreateAgentRequest, mockPluginSettings, mockKubernetesClient, mockPluginRequest)).
                 thenReturn(kubernetesInstance);
         testProperties.put("PodSpecType", "properties");

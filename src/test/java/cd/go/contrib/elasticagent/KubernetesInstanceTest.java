@@ -24,6 +24,26 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 class KubernetesInstanceTest {
+    @Test
+    void podAnnotationsDefaultToEmptyMap() {
+        KubernetesInstance instance1 = KubernetesInstance.builder()
+                .podName("test")
+                .environment("test")
+                .jobId(1L)
+                .build();
+        assertEquals(Map.of(), instance1.getPodAnnotations());
+    }
+
+    @Test
+    void podAnnotationsSafelyHandleNull() {
+        KubernetesInstance instance1 = KubernetesInstance.builder()
+                .podName("test")
+                .environment("test")
+                .podAnnotations(null)
+                .jobId(1L)
+                .build();
+        assertEquals(Map.of(), instance1.getPodAnnotations());
+    }
 
     @Test
     void podAnnotationsAreCopied() {
@@ -37,15 +57,5 @@ class KubernetesInstanceTest {
                 .build();
         annotations.put("key2", "value2");
         assertEquals(Map.of("key1", "value1"), instance1.getPodAnnotations());
-    }
-
-    @Test
-    void tpodAnnotationsAreCopied() {
-        KubernetesInstance instance1 = KubernetesInstance.builder()
-                .podName("test")
-                .environment("test")
-                .jobId(1L)
-                .build();
-        assertEquals(Map.of(), instance1.getPodAnnotations());
     }
 }
