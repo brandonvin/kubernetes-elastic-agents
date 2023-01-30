@@ -38,6 +38,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URL;
 import java.text.ParseException;
+import java.time.Instant;
 import java.util.*;
 
 import static cd.go.contrib.elasticagent.Constants.*;
@@ -164,27 +165,31 @@ public class KubernetesInstanceFactory {
     }
 
     KubernetesInstance fromKubernetesPod(Pod elasticAgentPod) {
-        KubernetesInstance kubernetesInstance;
         try {
             ObjectMeta metadata = elasticAgentPod.getMetadata();
-            DateTime createdAt = DateTime.now().withZone(DateTimeZone.UTC);
+            Instant createdInstant;
+            DateTime createdAt;
             if (StringUtils.isNotBlank(metadata.getCreationTimestamp())) {
                 createdAt = new DateTime(getSimpleDateFormat().parse(metadata.getCreationTimestamp())).withZone(DateTimeZone.UTC);
+                createdInstant = Instant.parse(metadata.getCreationTimestamp());
+            } else {
+                createdAt = DateTime.now().withZone(DateTimeZone.UTC);
+                createdInstant = Instant.now();
             }
+            LOG.info("[no-joda] created joda={}, created instant={}", createdAt, createdInstant);
             String environment = metadata.getLabels().get(ENVIRONMENT_LABEL_KEY);
             Long jobId = Long.valueOf(metadata.getLabels().get(JOB_ID_LABEL_KEY));
-            kubernetesInstance = new KubernetesInstance(
-                createdAt,
-                environment,
-                metadata.getName(), metadata.getAnnotations(),
-                jobId,
-                PodState.fromPod(elasticAgentPod),
-                KubernetesInstance.AgentState.Unknown
-            );
+            return KubernetesInstance.builder()
+                    .createdAt(createdAt)
+                    .environment(environment)
+                    .podName(metadata.getName())
+                    .podAnnotations(metadata.getAnnotations())
+                    .jobId(jobId)
+                    .podState(PodState.fromPod(elasticAgentPod))
+                    .build();
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
-        return kubernetesInstance;
     }
 
     private static List<EnvVar> environmentFrom(CreateAgentRequest request, PluginSettings settings, String podName, PluginRequest pluginRequest) {

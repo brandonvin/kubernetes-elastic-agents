@@ -49,11 +49,11 @@ public class ShouldAssignWorkRequestExecutor implements RequestExecutor {
 
             // TODO: not sure if matching on job ID is still needed.
             // Try disabling and see what happens.
-            if (jobId.equals(instance.jobId())) {
+            if (jobId.equals(instance.getJobId())) {
                 LOG.debug("[should-assign-work] Job with identifier {} can be assigned to pod {}.",
                         request.jobIdentifier(),
                         instance.getPodName());
-                return instance.withAgentState(KubernetesInstance.AgentState.Building);
+                return instance.toBuilder().agentState(KubernetesInstance.AgentState.Building).build();
             }
 
             String jobClusterProfileId = Util.objectUUID(request.clusterProfileProperties());
@@ -73,7 +73,7 @@ public class ShouldAssignWorkRequestExecutor implements RequestExecutor {
                     podElasticProfileId);
             if (matchClusterProfile && matchElasticProfile) {
                 LOG.info("[reuse] Reusing existing pod {} for job {}", instance.getPodName(), request);
-                return instance.withAgentState(KubernetesInstance.AgentState.Building);
+                return instance.toBuilder().agentState(KubernetesInstance.AgentState.Building).build();
             }
 
             LOG.info(String.format("[should-assign-work] No KubernetesInstance can handle request %s", request));

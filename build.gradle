@@ -80,6 +80,12 @@ dependencies {
     testImplementation group: 'org.mockito', name: 'mockito-core', version: '5.0.0'
     testImplementation group: 'org.skyscreamer', name: 'jsonassert', version: '1.5.1'
     testImplementation group: 'org.jsoup', name: 'jsoup', version: '1.15.3'
+
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+
+    testCompileOnly 'org.projectlombok:lombok:1.18.24'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
 }
 
 test {

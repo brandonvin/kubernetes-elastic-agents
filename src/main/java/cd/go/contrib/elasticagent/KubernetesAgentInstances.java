@@ -97,7 +97,7 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
         List<KubernetesInstance> eligiblePods = new ArrayList<>();
 
         for (KubernetesInstance instance : instances.values()) {
-            if (instance.jobId().equals(jobId)) {
+            if (instance.getJobId().equals(jobId)) {
                 eligiblePods.add(instance);
                 continue;
             }
@@ -162,7 +162,7 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
             KubernetesClient client = factory.client(settings);
             KubernetesInstance instance = kubernetesInstanceFactory.create(request, settings, client, pluginRequest);
             consoleLogAppender.accept(String.format("Created pod: %s", instance.getPodName()));
-            instance = instance.withAgentState(AgentState.Building);
+            instance = instance.toBuilder().agentState(AgentState.Building).build();
             register(instance);
             consoleLogAppender.accept(String.format("Agent pod %s created. Waiting for it to register to the GoCD server.", instance.getPodName()));
             return Optional.of(instance);
@@ -176,7 +176,7 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
 
     private boolean isAgentCreatedForJob(Long jobId) {
         for (KubernetesInstance instance : instances.values()) {
-            if (instance.jobId().equals(jobId)) {
+            if (instance.getJobId().equals(jobId)) {
                 return true;
             }
         }
@@ -218,7 +218,7 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
                 continue;
             }
 
-            if (clock.now().isAfter(instance.createdAt().plus(settings.getAutoRegisterPeriod()))) {
+            if (clock.now().isAfter(instance.getCreatedAt().plus(settings.getAutoRegisterPeriod()))) {
                 oldAgents.add(agent);
             }
         }
@@ -258,7 +258,7 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
             KubernetesInstance oldInstance = oldInstances.get(podName);
             if (oldInstance != null) {
                 AgentState oldAgentState = oldInstances.get(podName).getAgentState();
-                newInstance = newInstance.withAgentState(oldAgentState);
+                newInstance = newInstance.toBuilder().agentState(oldAgentState).build();
                 LOG.debug("[reuse] Preserved AgentState {} upon refresh of pod {}", oldAgentState, podName);
             }
             register(newInstance);
@@ -269,7 +269,7 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
 
     @Override
     public KubernetesInstance updateAgentState(String agentId, KubernetesInstance.AgentState newAgentState) {
-        return instances.computeIfPresent(agentId, (key, instance) -> instance.withAgentState(newAgentState));
+        return instances.computeIfPresent(agentId, (key, instance) -> instance.toBuilder().agentState(newAgentState).build());
     }
 
     @Override
