@@ -29,8 +29,6 @@ import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +37,7 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.text.ParseException;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 import static cd.go.contrib.elasticagent.Constants.*;
@@ -168,26 +167,22 @@ public class KubernetesInstanceFactory {
         try {
             ObjectMeta metadata = elasticAgentPod.getMetadata();
             Instant createdInstant;
-            DateTime createdAt;
             if (StringUtils.isNotBlank(metadata.getCreationTimestamp())) {
-                createdAt = new DateTime(getSimpleDateFormat().parse(metadata.getCreationTimestamp())).withZone(DateTimeZone.UTC);
                 createdInstant = Instant.parse(metadata.getCreationTimestamp());
             } else {
-                createdAt = DateTime.now().withZone(DateTimeZone.UTC);
                 createdInstant = Instant.now();
             }
-            LOG.info("[no-joda] created joda={}, created instant={}", createdAt, createdInstant);
             String environment = metadata.getLabels().get(ENVIRONMENT_LABEL_KEY);
             Long jobId = Long.valueOf(metadata.getLabels().get(JOB_ID_LABEL_KEY));
             return KubernetesInstance.builder()
-                    .createdAt(createdAt)
+                    .createdAt(createdInstant)
                     .environment(environment)
                     .podName(metadata.getName())
                     .podAnnotations(metadata.getAnnotations())
                     .jobId(jobId)
                     .podState(PodState.fromPod(elasticAgentPod))
                     .build();
-        } catch (ParseException e) {
+        } catch (DateTimeParseException e) {
             throw new RuntimeException(e);
         }
     }

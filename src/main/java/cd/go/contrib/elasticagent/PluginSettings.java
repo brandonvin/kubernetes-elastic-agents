@@ -23,6 +23,8 @@ import com.google.gson.annotations.SerializedName;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.Period;
 
+import java.time.Duration;
+
 import static cd.go.contrib.elasticagent.utils.Util.IntTypeAdapter;
 
 public class PluginSettings {
@@ -54,7 +56,7 @@ public class PluginSettings {
     @SerializedName("namespace")
     private String namespace;
 
-    private Period autoRegisterPeriod;
+    private Duration autoRegisterPeriod;
 
     public PluginSettings() {
     }
@@ -72,9 +74,9 @@ public class PluginSettings {
         return gson.fromJson(json, PluginSettings.class);
     }
 
-    public Period getAutoRegisterPeriod() {
+    public Duration getAutoRegisterPeriod() {
         if (this.autoRegisterPeriod == null) {
-            this.autoRegisterPeriod = new Period().withMinutes(getAutoRegisterTimeout());
+            this.autoRegisterPeriod = Duration.ofMinutes(getAutoRegisterTimeout());
         }
         return this.autoRegisterPeriod;
     }

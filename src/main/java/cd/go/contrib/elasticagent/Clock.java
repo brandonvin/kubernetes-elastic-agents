@@ -19,45 +19,38 @@ package cd.go.contrib.elasticagent;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 
-public interface Clock {
-    Clock DEFAULT = DateTime::new;
+import java.time.Instant;
+import java.time.temporal.TemporalAmount;
 
-    DateTime now();
+public interface Clock {
+    Clock DEFAULT = Instant::now;
+
+    Instant now();
 
     class TestClock implements Clock {
 
-        DateTime time = null;
+        Instant time = null;
 
-        public TestClock(DateTime time) {
+        public TestClock(Instant time) {
             this.time = time;
         }
 
         public TestClock() {
-            this(new DateTime());
+            this(Instant.now());
         }
 
         @Override
-        public DateTime now() {
+        public Instant now() {
             return time;
         }
 
         public TestClock reset() {
-            time = new DateTime();
+            time = Instant.now();
             return this;
         }
 
-        public TestClock set(DateTime time) {
+        public TestClock set(Instant time) {
             this.time = time;
-            return this;
-        }
-
-        public TestClock rewind(Period period) {
-            this.time = this.time.minus(period);
-            return this;
-        }
-
-        public TestClock forward(Period period) {
-            this.time = this.time.plus(period);
             return this;
         }
     }

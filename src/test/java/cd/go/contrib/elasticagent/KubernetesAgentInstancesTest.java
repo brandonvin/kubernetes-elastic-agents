@@ -24,13 +24,12 @@ import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.PodResource;
-import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -88,7 +87,7 @@ public class KubernetesAgentInstancesTest {
 
     @Test
     public void shouldCreateKubernetesPodUsingPodYamlAndCacheCreatedInstance() throws IOException {
-        KubernetesInstance kubernetesInstance = KubernetesInstance.of(new DateTime(), "test", "test-agent", new HashMap<>(), 100L, PodState.Running);
+        KubernetesInstance kubernetesInstance = KubernetesInstance.of(Instant.now(), "test", "test-agent", new HashMap<>(), 100L, PodState.Running);
         when(mockKubernetesInstanceFactory.create(mockCreateAgentRequest, mockPluginSettings, mockKubernetesClient, mockPluginRequest)).
                 thenReturn(kubernetesInstance);
 
@@ -101,7 +100,7 @@ public class KubernetesAgentInstancesTest {
 
     @Test
     public void shouldCreateKubernetesPodAndCacheCreatedInstance() throws IOException {
-        KubernetesInstance kubernetesInstance = KubernetesInstance.of(new DateTime(), "test", "test-agent", new HashMap<>(), 100L, PodState.Running);
+        KubernetesInstance kubernetesInstance = KubernetesInstance.of(Instant.now(), "test", "test-agent", new HashMap<>(), 100L, PodState.Running);
         when(mockKubernetesInstanceFactory.create(mockCreateAgentRequest, mockPluginSettings, mockKubernetesClient, mockPluginRequest)).
                 thenReturn(kubernetesInstance);
         testProperties.put("PodSpecType", "properties");
@@ -112,7 +111,7 @@ public class KubernetesAgentInstancesTest {
 
     @Test
     public void shouldCreateKubernetesPodFromFileAndCacheCreatedInstance() throws IOException {
-        KubernetesInstance kubernetesInstance = KubernetesInstance.of(new DateTime(), "test", "test-agent", new HashMap<>(), 100L, PodState.Running);
+        KubernetesInstance kubernetesInstance = KubernetesInstance.of(Instant.now(), "test", "test-agent", new HashMap<>(), 100L, PodState.Running);
         when(mockKubernetesInstanceFactory.create(mockCreateAgentRequest, mockPluginSettings, mockKubernetesClient, mockPluginRequest)).
                 thenReturn(kubernetesInstance);
         testProperties.put("PodSpecType", "remote");
@@ -123,7 +122,7 @@ public class KubernetesAgentInstancesTest {
 
     @Test
     public void shouldNotCreatePodWhenOutstandingRequestsExistForJobs() throws IOException {
-        KubernetesInstance kubernetesInstance = KubernetesInstance.of(new DateTime(), "test", "test-agent", new HashMap<>(), 100L, PodState.Running);
+        KubernetesInstance kubernetesInstance = KubernetesInstance.of(Instant.now(), "test", "test-agent", new HashMap<>(), 100L, PodState.Running);
         when(mockKubernetesInstanceFactory.create(mockCreateAgentRequest, mockPluginSettings, mockKubernetesClient, mockPluginRequest)).
                 thenReturn(kubernetesInstance);
         testProperties.put("PodSpecType", "properties");
@@ -157,7 +156,7 @@ public class KubernetesAgentInstancesTest {
         when(mockPluginSettings.getMaxPendingPods()).thenReturn(1);
 
         //pending kubernetes pod
-        KubernetesInstance kubernetesInstance = KubernetesInstance.of(new DateTime(), "test", "test-agent", new HashMap<>(), 100L, PodState.Pending);
+        KubernetesInstance kubernetesInstance = KubernetesInstance.of(Instant.now(), "test", "test-agent", new HashMap<>(), 100L, PodState.Pending);
         when(mockKubernetesInstanceFactory.create(mockCreateAgentRequest, mockPluginSettings, mockKubernetesClient, mockPluginRequest)).
                 thenReturn(kubernetesInstance);
         testProperties.put("PodSpecType", "properties");
@@ -187,7 +186,7 @@ public class KubernetesAgentInstancesTest {
         verify(mockKubernetesInstanceFactory, times(0)).create(any(), any(), any(), any());
     }
 
-    // TODO: plugin has been changed to only refreshAll on ping requests. Re-evaluute this test.
+    // TODO: plugin has been changed to only refreshAll on ping requests. Re-evaluate this test.
     /*
     @Test
     public void shouldSyncPodsStateFromClusterBeforeCreatingPod() throws IOException {

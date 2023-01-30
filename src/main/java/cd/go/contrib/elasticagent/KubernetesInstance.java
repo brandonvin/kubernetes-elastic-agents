@@ -25,6 +25,7 @@ import org.joda.time.DateTimeZone;
 
 import java.util.Collections;
 import java.util.Map;
+import java.time.Instant;
 
 /*
  * KubernetesInstance represents an agent pod in Kubernetes.
@@ -33,7 +34,7 @@ import java.util.Map;
 @Builder(toBuilder = true)
 public class KubernetesInstance {
 
-    public static KubernetesInstance of(DateTime createdAt,
+    public static KubernetesInstance of(Instant createdAt,
     String environment,
     String podName,
     Map<String, String> podAnnotations,
@@ -64,7 +65,7 @@ public class KubernetesInstance {
     public static final String ELASTIC_PROFILE_ID = "go.cd/elastic-profile-id";
 
     @NonNull @Builder.Default
-    DateTime createdAt = DateTime.now();
+    Instant createdAt = Instant.now();
 
     // populated from k8s pod metadata.labels.Elastic-Agent-Environment
     @NonNull
