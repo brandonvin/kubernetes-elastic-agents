@@ -84,11 +84,11 @@ public class ServerPingRequestExecutor implements RequestExecutor {
         }
     }
 
-    private void terminateDisabledAgents(Agents agents, ClusterProfileProperties clusterProfileProperties, KubernetesAgentInstances dockerContainers) throws Exception {
+    private void terminateDisabledAgents(Agents agents, ClusterProfileProperties clusterProfileProperties, KubernetesAgentInstances instances) throws Exception {
         Collection<Agent> toBeDeleted = agents.findInstancesToTerminate();
 
         for (Agent agent : toBeDeleted) {
-            dockerContainers.terminate(agent.elasticAgentId(), clusterProfileProperties);
+            instances.terminate(agent.elasticAgentId(), clusterProfileProperties);
         }
 
         pluginRequest.deleteAgents(toBeDeleted);

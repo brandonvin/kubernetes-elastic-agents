@@ -18,7 +18,6 @@ package cd.go.contrib.elasticagent;
 
 import com.google.gson.Gson;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

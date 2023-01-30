@@ -16,11 +16,7 @@
 
 package cd.go.contrib.elasticagent;
 
-import org.joda.time.DateTime;
-import org.joda.time.Period;
-
 import java.time.Instant;
-import java.time.temporal.TemporalAmount;
 
 public interface Clock {
     Clock DEFAULT = Instant::now;

@@ -16,7 +16,6 @@
 
 package cd.go.contrib.elasticagent.utils;
 
-import com.google.common.collect.ImmutableSortedMap;
 import io.fabric8.kubernetes.api.model.Quantity;
 import org.apache.commons.lang3.StringUtils;
 
@@ -27,41 +26,40 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
 public class Size implements Comparable<Size> {
     private static final Pattern SIZE_PATTERN = Pattern.compile("(\\d+)\\s*(\\S+)");
 
-    private static final Map<String, SizeUnit> SUFFIXES = ImmutableSortedMap.<String, SizeUnit>orderedBy(String.CASE_INSENSITIVE_ORDER)
-            .put("B", SizeUnit.BYTES)
-            .put("byte", SizeUnit.BYTES)
-            .put("bytes", SizeUnit.BYTES)
-            .put("K", SizeUnit.KILOBYTES)
-            .put("KB", SizeUnit.KILOBYTES)
-            .put("Ki", SizeUnit.KILOBYTES)
-            .put("KiB", SizeUnit.KILOBYTES)
-            .put("kilobyte", SizeUnit.KILOBYTES)
-            .put("kilobytes", SizeUnit.KILOBYTES)
-            .put("M", SizeUnit.MEGABYTES)
-            .put("Mi", SizeUnit.MEGABYTES)
-            .put("MB", SizeUnit.MEGABYTES)
-            .put("MiB", SizeUnit.MEGABYTES)
-            .put("megabyte", SizeUnit.MEGABYTES)
-            .put("megabytes", SizeUnit.MEGABYTES)
-            .put("G", SizeUnit.GIGABYTES)
-            .put("Gi", SizeUnit.GIGABYTES)
-            .put("GB", SizeUnit.GIGABYTES)
-            .put("GiB", SizeUnit.GIGABYTES)
-            .put("gigabyte", SizeUnit.GIGABYTES)
-            .put("gigabytes", SizeUnit.GIGABYTES)
-            .put("T", SizeUnit.TERABYTES)
-            .put("TB", SizeUnit.TERABYTES)
-            .put("Ti", SizeUnit.TERABYTES)
-            .put("TiB", SizeUnit.TERABYTES)
-            .put("terabyte", SizeUnit.TERABYTES)
-            .put("terabytes", SizeUnit.TERABYTES)
-            .build();
+    private static final Map<String, SizeUnit> SUFFIXES = Map.ofEntries(
+            Map.entry("B", SizeUnit.BYTES),
+            Map.entry("byte", SizeUnit.BYTES),
+            Map.entry("bytes", SizeUnit.BYTES),
+            Map.entry("K", SizeUnit.KILOBYTES),
+            Map.entry("KB", SizeUnit.KILOBYTES),
+            Map.entry("Ki", SizeUnit.KILOBYTES),
+            Map.entry("KiB", SizeUnit.KILOBYTES),
+            Map.entry("kilobyte", SizeUnit.KILOBYTES),
+            Map.entry("kilobytes", SizeUnit.KILOBYTES),
+            Map.entry("M", SizeUnit.MEGABYTES),
+            Map.entry("Mi", SizeUnit.MEGABYTES),
+            Map.entry("MB", SizeUnit.MEGABYTES),
+            Map.entry("MiB", SizeUnit.MEGABYTES),
+            Map.entry("megabyte", SizeUnit.MEGABYTES),
+            Map.entry("megabytes", SizeUnit.MEGABYTES),
+            Map.entry("G", SizeUnit.GIGABYTES),
+            Map.entry("Gi", SizeUnit.GIGABYTES),
+            Map.entry("GB", SizeUnit.GIGABYTES),
+            Map.entry("GiB", SizeUnit.GIGABYTES),
+            Map.entry("gigabyte", SizeUnit.GIGABYTES),
+            Map.entry("gigabytes", SizeUnit.GIGABYTES),
+            Map.entry("T", SizeUnit.TERABYTES),
+            Map.entry("TB", SizeUnit.TERABYTES),
+            Map.entry("Ti", SizeUnit.TERABYTES),
+            Map.entry("TiB", SizeUnit.TERABYTES),
+            Map.entry("terabyte", SizeUnit.TERABYTES),
+            Map.entry("terabytes", SizeUnit.TERABYTES));
+
     private final double count;
     private final SizeUnit unit;
 
@@ -95,7 +93,9 @@ public class Size implements Comparable<Size> {
             throw new IllegalArgumentException();
         }
         final Matcher matcher = SIZE_PATTERN.matcher(size);
-        checkArgument(matcher.matches(), "Invalid size: " + size);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Invalid size: " + size);
+        }
 
         final double count = Double.parseDouble(matcher.group(1));
         final SizeUnit unit = SUFFIXES.get(matcher.group(2));
