@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Semaphore;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -42,7 +41,6 @@ import static java.text.MessageFormat.format;
 public class KubernetesAgentInstances implements AgentInstances<KubernetesInstance> {
     private final ConcurrentHashMap<String, KubernetesInstance> instances = new ConcurrentHashMap<>();
     public Clock clock = Clock.DEFAULT;
-    final Semaphore semaphore = new Semaphore(0, true);
 
     private KubernetesClientFactory factory;
     private KubernetesInstanceFactory kubernetesInstanceFactory;
@@ -74,12 +72,6 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
                 consoleLogAppender.accept(message);
                 return Optional.empty();
             }
-        }
-    }
-
-    private void doWithLockOnSemaphore(Runnable runnable) {
-        synchronized (semaphore) {
-            runnable.run();
         }
     }
 
