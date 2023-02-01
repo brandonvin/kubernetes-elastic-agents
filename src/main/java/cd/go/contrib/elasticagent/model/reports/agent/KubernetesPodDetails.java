@@ -24,7 +24,8 @@ public class KubernetesPodDetails {
         KubernetesPodDetails podDetails = new KubernetesPodDetails();
 
         podDetails.name = pod.getMetadata().getName();
-        podDetails.clusterName = pod.getMetadata().getClusterName();
+        // TODO: verify in GoCD UI
+        podDetails.clusterName = pod.getMetadata().getGenerateName();
         podDetails.nodeName = pod.getSpec().getNodeName();
         podDetails.namespace = pod.getMetadata().getNamespace();
 

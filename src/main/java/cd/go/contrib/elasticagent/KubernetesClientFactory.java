@@ -19,6 +19,7 @@ package cd.go.contrib.elasticagent;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.concurrent.TimeUnit;
@@ -80,7 +81,7 @@ public class KubernetesClientFactory {
                 .withCaCertData(pluginSettings.getCaCertData())
                 .withNamespace(pluginSettings.getNamespace());
 
-        return new DefaultKubernetesClient(configBuilder.build());
+        return new KubernetesClientBuilder().withConfig(configBuilder.build()).build();
     }
 
     public void clearOutExistingClient() {
