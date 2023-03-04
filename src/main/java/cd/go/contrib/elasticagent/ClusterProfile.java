@@ -18,7 +18,9 @@ package cd.go.contrib.elasticagent;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Objects;
 
@@ -100,6 +102,7 @@ public class ClusterProfile {
     }
 
     public void setClusterProfileProperties(PluginSettings pluginSettings) {
-        this.clusterProfileProperties = ClusterProfileProperties.fromConfiguration(GSON.fromJson(GSON.toJson(pluginSettings), HashMap.class));
+        Type typeToken = new TypeToken<HashMap<String, String>>() {}.getType();
+        this.clusterProfileProperties = ClusterProfileProperties.fromConfiguration(GSON.fromJson(GSON.toJson(pluginSettings), typeToken));
     }
 }

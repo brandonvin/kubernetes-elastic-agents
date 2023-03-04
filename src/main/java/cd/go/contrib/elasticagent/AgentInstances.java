@@ -19,6 +19,10 @@ package cd.go.contrib.elasticagent;
 import cd.go.contrib.elasticagent.executors.ServerPingRequestExecutor;
 import cd.go.contrib.elasticagent.requests.CreateAgentRequest;
 
+import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
 
 /**
  * Plugin implementors should implement these methods to interface to your cloud.
@@ -36,7 +40,7 @@ public interface AgentInstances<T> {
      * @param pluginRequest the plugin request object
      * @param consoleLogAppender
      */
-    T create(CreateAgentRequest request, PluginSettings settings, PluginRequest pluginRequest, ConsoleLogAppender consoleLogAppender) throws Exception;
+    Optional<T> createIfNecessary(CreateAgentRequest request, PluginSettings settings, PluginRequest pluginRequest, ConsoleLogAppender consoleLogAppender) throws Exception;
 
     /**
      * This message is sent when the plugin needs to terminate the agent instance.
@@ -84,5 +88,16 @@ public interface AgentInstances<T> {
      * @param agentId the elastic agent id
      */
     T find(String agentId);
+
+    /**
+     * Atomically updates the agent state of the specified <code>agentId</code>
+     * in the store, if it exists.
+     *
+     * @param agentId the elastic agent id
+     * @return the updated instance, or null if it did not exist
+     */
+    T updateAgentState(String agentId, KubernetesInstance.AgentState newAgentState);
+
+    T compute(String agentId, BiFunction<String, T, T> computeFn);
 }
 

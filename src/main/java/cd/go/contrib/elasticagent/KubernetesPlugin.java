@@ -92,7 +92,7 @@ public class KubernetesPlugin implements GoPlugin {
                 case REQUEST_JOB_COMPLETION:
                     JobCompletionRequest jobCompletionRequest = JobCompletionRequest.fromJSON(request.requestBody());
                     clusterProfileProperties = jobCompletionRequest.clusterProfileProperties();
-                    return jobCompletionRequest.executor(getAgentInstancesFor(clusterProfileProperties), pluginRequest).execute();
+                    return jobCompletionRequest.executor(getAgentInstancesFor(clusterProfileProperties)).execute();
                 case REQUEST_CLUSTER_STATUS_REPORT:
                     ClusterStatusReportRequest clusterStatusReportRequest = ClusterStatusReportRequest.fromJSON(request.requestBody());
                     clusterProfileProperties = clusterStatusReportRequest.clusterProfileProperties();
@@ -108,6 +108,8 @@ public class KubernetesPlugin implements GoPlugin {
                     return new DefaultGoPluginApiResponse(200);
                 case REQUEST_MIGRATE_CONFIGURATION:
                     return MigrateConfigurationRequest.fromJSON(request.requestBody()).executor().execute();
+                case REQUEST_PLUGIN_SETTINGS:
+                    return DefaultGoPluginApiResponse.success("{}");
                 default:
                     throw new UnhandledRequestTypeException(request.requestName());
             }

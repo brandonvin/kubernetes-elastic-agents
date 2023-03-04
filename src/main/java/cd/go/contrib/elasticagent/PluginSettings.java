@@ -21,8 +21,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import org.apache.commons.lang3.StringUtils;
+
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 
 import static cd.go.contrib.elasticagent.utils.Util.IntTypeAdapter;
 
@@ -75,7 +75,7 @@ public class PluginSettings {
 
     public Duration getAutoRegisterPeriod() {
         if (this.autoRegisterPeriod == null) {
-            this.autoRegisterPeriod = Duration.of(getAutoRegisterTimeout(), ChronoUnit.MINUTES);
+            this.autoRegisterPeriod = Duration.ofMinutes(getAutoRegisterTimeout());
         }
         return this.autoRegisterPeriod;
     }

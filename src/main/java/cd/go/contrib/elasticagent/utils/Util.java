@@ -26,9 +26,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
+import java.text.SimpleDateFormat;
+import java.util.Objects;
 import java.util.Properties;
+import java.util.TimeZone;
 
 import static cd.go.contrib.elasticagent.Constants.KUBERNETES_POD_CREATION_TIME_FORMAT;
 
@@ -38,8 +39,10 @@ public class Util {
             .excludeFieldsWithoutExposeAnnotation()
             .create();
 
-    public static DateTimeFormatter getSimpleDateFormat() {
-        return DateTimeFormatter.ofPattern(KUBERNETES_POD_CREATION_TIME_FORMAT).withZone(ZoneOffset.UTC);
+    public static SimpleDateFormat getSimpleDateFormat() {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(KUBERNETES_POD_CREATION_TIME_FORMAT);
+        simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return simpleDateFormat;
     }
 
     public static String readResource(String resourceFile) {
@@ -73,6 +76,10 @@ public class Util {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static String objectUUID(Object o) {
+        return Integer.toHexString(Objects.hash(o));
     }
 
     public static String fullVersion() {

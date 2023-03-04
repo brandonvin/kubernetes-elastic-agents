@@ -76,25 +76,29 @@ public class ShouldAssignWorkRequestExecutorTest extends BaseTest {
         agentInstances = new KubernetesAgentInstances(factory);
         properties.put("foo", "bar");
         properties.put("Image", "gocdcontrib/ubuntu-docker-elastic-agent");
-        instance = agentInstances.create(new CreateAgentRequest(UUID.randomUUID().toString(), properties, environment, new JobIdentifier(100L)), createClusterProfileProperties(), pluginRequest, consoleLogAppender);
+        instance = agentInstances.createIfNecessary(new CreateAgentRequest(UUID.randomUUID().toString(), properties, environment, new JobIdentifier(100L)), createClusterProfileProperties(), pluginRequest, consoleLogAppender).get();
     }
 
+    // TODO: Re-evaluate whether the "assign by matching job ID" behavior should even exist anymore.
     @Test
     public void shouldAssignWorkWhenJobIdMatchesPodId() throws Exception {
         JobIdentifier jobIdentifier = new JobIdentifier("test-pipeline", 1L, "Test Pipeline", "test-stage", "1", "test-job", 100L);
-        ShouldAssignWorkRequest request = new ShouldAssignWorkRequest(new Agent(instance.name(), null, null, null), environment, properties, jobIdentifier);
+        ShouldAssignWorkRequest request = new ShouldAssignWorkRequest(new Agent(instance.getPodName(), null, null, null), environment, properties, jobIdentifier);
         GoPluginApiResponse response = new ShouldAssignWorkRequestExecutor(request, agentInstances).execute();
         assertThat(response.responseCode()).isEqualTo(200);
         assertThat(response.responseBody()).isEqualTo("true");
     }
 
+    // TODO: This test is no longer valid with pod reuse. Re-evaluate whether the "assign by matching job ID" behavior should even exist anymore.
+    /*
     @Test
     public void shouldNotAssignWorkWhenJobIdDiffersFromPodId() throws Exception {
         long mismatchingJobId = 200L;
         JobIdentifier jobIdentifier = new JobIdentifier("test-pipeline", 1L, "Test Pipeline", "test-stage", "1", "test-job", mismatchingJobId);
-        ShouldAssignWorkRequest request = new ShouldAssignWorkRequest(new Agent(instance.name(), null, null, null), "FooEnv", properties, jobIdentifier);
+        ShouldAssignWorkRequest request = new ShouldAssignWorkRequest(new Agent(instance.getPodName(), null, null, null), "FooEnv", properties, jobIdentifier);
         GoPluginApiResponse response = new ShouldAssignWorkRequestExecutor(request, agentInstances).execute();
         assertThat(response.responseCode()).isEqualTo(200);
         assertThat(response.responseBody()).isEqualTo("false");
     }
+     */
 }
