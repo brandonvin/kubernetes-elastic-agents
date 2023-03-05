@@ -144,18 +144,10 @@ public class ServerPingRequestExecutorTest extends BaseTest {
         Agent agent5 = new Agent(agentId5, Agent.AgentState.Idle, Agent.BuildState.Idle, Agent.ConfigState.Enabled); //idle just created
         Agent agent6 = new Agent(agentId6, Agent.AgentState.Building, Agent.BuildState.Building, Agent.ConfigState.Enabled); //running time elapsed
 
-        // KubernetesInstance k8sPodForAgent1 = KubernetesInstance.of(Instant.now().minus(100, ChronoUnit.MINUTES), "test", agentId1, Collections.emptyMap(), 1L, PodState.Running);
-        // KubernetesInstance k8sPodForAgent2 = KubernetesInstance.of(Instant.now(), "test", agentId2, Collections.emptyMap(), 2L, PodState.Running);
-        // KubernetesInstance k8sPodForAgent3 = KubernetesInstance.of(Instant.now().minus(100, ChronoUnit.MINUTES), "test", agentId3, Collections.emptyMap(), 3L, PodState.Running);
-
-        // KubernetesInstance k8sPodForAgent4 = KubernetesInstance.of(Instant.now().minus(100, ChronoUnit.MINUTES), "test", agentId4, Collections.emptyMap(), 1L, PodState.Running);
-        // KubernetesInstance k8sPodForAgent5 = KubernetesInstance.of(Instant.now(), "test", agentId5, Collections.emptyMap(), 2L, PodState.Running);
-        // KubernetesInstance k8sPodForAgent6 = KubernetesInstance.of(Instant.now().minus(100, ChronoUnit.MINUTES), "test", agentId6, Collections.emptyMap(), 3L, PodState.Running);
-
         KubernetesInstance k8sPodForAgent1 = KubernetesInstance.builder()
                 .createdAt(Instant.now().minus(100, ChronoUnit.MINUTES)).environment("test").podName(agentId1).jobId(1L).podState(PodState.Running).build();
         KubernetesInstance k8sPodForAgent2 = KubernetesInstance.builder()
-                .createdAt(Instant.now()).environment("test").podName(agentId1).jobId(2L).podState(PodState.Running).build();
+                .createdAt(Instant.now()).environment("test").podName(agentId2).jobId(2L).podState(PodState.Running).build();
         KubernetesInstance k8sPodForAgent3 = KubernetesInstance.builder()
                 .createdAt(Instant.now().minus(100, ChronoUnit.MINUTES)).environment("test").podName(agentId3).jobId(3L).podState(PodState.Running).build();
 
