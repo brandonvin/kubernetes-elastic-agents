@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.stubbing.Answer;
 
-import java.time.temporal.ChronoUnit;
+import static java.time.temporal.ChronoUnit.MINUTES;
 import java.util.*;
 import java.time.Instant;
 
@@ -90,9 +90,9 @@ public class ServerPingRequestExecutorTest extends BaseTest {
         Agent agent2 = new Agent(agentId2, Agent.AgentState.Idle, Agent.BuildState.Idle, Agent.ConfigState.Enabled); //idle just created
         Agent agent3 = new Agent(agentId3, Agent.AgentState.Building, Agent.BuildState.Building, Agent.ConfigState.Enabled); //running time elapsed
 
-        KubernetesInstance k8sPodForAgent1 = KubernetesInstance.builder().createdAt(Instant.now().minus(100, ChronoUnit.MINUTES)).environment("test").podName(agentId1).jobId(1L).podState(PodState.Running).build();
+        KubernetesInstance k8sPodForAgent1 = KubernetesInstance.builder().createdAt(Instant.now().minus(100, MINUTES)).environment("test").podName(agentId1).jobId(1L).podState(PodState.Running).build();
         KubernetesInstance k8sPodForAgent2 = KubernetesInstance.builder().createdAt(Instant.now()).environment("test").podName(agentId2).jobId(2L).podState(PodState.Running).build();
-        KubernetesInstance k8sPodForAgent3 = KubernetesInstance.builder().createdAt(Instant.now().minus(100, ChronoUnit.MINUTES)).environment("test").podName(agentId3).jobId(3L).podState(PodState.Running).build();
+        KubernetesInstance k8sPodForAgent3 = KubernetesInstance.builder().createdAt(Instant.now().minus(100, MINUTES)).environment("test").podName(agentId3).jobId(3L).podState(PodState.Running).build();
 
         final Agents allAgentsInitially = new Agents(Arrays.asList(agent1, agent2, agent3));
         final Agents allAgentsAfterDisablingIdleAgents = new Agents(Arrays.asList(agent1AfterDisabling, agent2, agent3));
@@ -145,18 +145,18 @@ public class ServerPingRequestExecutorTest extends BaseTest {
         Agent agent6 = new Agent(agentId6, Agent.AgentState.Building, Agent.BuildState.Building, Agent.ConfigState.Enabled); //running time elapsed
 
         KubernetesInstance k8sPodForAgent1 = KubernetesInstance.builder()
-                .createdAt(Instant.now().minus(100, ChronoUnit.MINUTES)).environment("test").podName(agentId1).jobId(1L).podState(PodState.Running).build();
+                .createdAt(Instant.now().minus(100, MINUTES)).environment("test").podName(agentId1).jobId(1L).podState(PodState.Running).build();
         KubernetesInstance k8sPodForAgent2 = KubernetesInstance.builder()
                 .createdAt(Instant.now()).environment("test").podName(agentId2).jobId(2L).podState(PodState.Running).build();
         KubernetesInstance k8sPodForAgent3 = KubernetesInstance.builder()
-                .createdAt(Instant.now().minus(100, ChronoUnit.MINUTES)).environment("test").podName(agentId3).jobId(3L).podState(PodState.Running).build();
+                .createdAt(Instant.now().minus(100, MINUTES)).environment("test").podName(agentId3).jobId(3L).podState(PodState.Running).build();
 
         KubernetesInstance k8sPodForAgent4 = KubernetesInstance.builder()
-                .createdAt(Instant.now().minus(100, ChronoUnit.MINUTES)).environment("test").podName(agentId4).jobId(1L).podState(PodState.Running).build();
+                .createdAt(Instant.now().minus(100, MINUTES)).environment("test").podName(agentId4).jobId(1L).podState(PodState.Running).build();
         KubernetesInstance k8sPodForAgent5 = KubernetesInstance.builder()
                 .createdAt(Instant.now()).environment("test").podName(agentId5).jobId(2L).podState(PodState.Running).build();
         KubernetesInstance k8sPodForAgent6 = KubernetesInstance.builder()
-                .createdAt(Instant.now().minus(100, ChronoUnit.MINUTES)).environment("test").podName(agentId6).jobId(3L).podState(PodState.Running).build();
+                .createdAt(Instant.now().minus(100, MINUTES)).environment("test").podName(agentId6).jobId(3L).podState(PodState.Running).build();
 
         final Agents allAgentsInitially = new Agents(Arrays.asList(agent1, agent2, agent3, agent4, agent5, agent6));
         final Agents allAgentsAfterDisablingIdleAgentsFromCluster1 = new Agents(Arrays.asList(agent1AfterDisabling, agent2, agent3, agent4, agent5, agent6));
@@ -219,7 +219,7 @@ public class ServerPingRequestExecutorTest extends BaseTest {
         ClusterProfileProperties clusterProfilePropertiesForCluster1 = new ClusterProfileProperties("https://localhost:8154/go", null, null);
 
         KubernetesInstance k8sUnregisteredCluster1Pod1 = KubernetesInstance.builder()
-                .createdAt(Instant.now().minus(100, ChronoUnit.MINUTES)).environment("test").podName(unregisteredAgentId1).jobId(3L).podState(PodState.Running).build();
+                .createdAt(Instant.now().minus(100, MINUTES)).environment("test").podName(unregisteredAgentId1).jobId(3L).podState(PodState.Running).build();
         KubernetesInstance k8sUnregisteredCluster1Pod2 = KubernetesInstance.builder()
                 .createdAt(Instant.now()).environment("test").podName(unregisteredAgentId2).jobId(3L).podState(PodState.Running).build();
 
