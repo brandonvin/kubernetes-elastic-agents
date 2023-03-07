@@ -16,70 +16,179 @@
 
 package cd.go.contrib.elasticagent;
 
-import lombok.RequiredArgsConstructor;
-import lombok.Value;
-import lombok.NonNull;
-import lombok.Builder;
-
 import java.util.Collections;
 import java.util.Map;
 import java.time.Instant;
 
-/*
+/**
  * KubernetesInstance represents an agent pod in Kubernetes.
+ * Its fields are immutable.
  */
-@Value
-@Builder(toBuilder = true)
 public class KubernetesInstance {
+
+    /**
+     * AgentState represents the possible agent states from the
+     * GoCD server perspective - whether it is currently running a job,
+     * ready to accept a new job, etc.
+     */
     public enum AgentState {
-        // Unknown means the agent hasn't yet been registered with the plugin.
-        // For example, if the GoCD server restarted while a pod was building,
-        // the state will be Unknown until the pod finishes its job.
+        /**
+         * Unknown means the agent hasn't yet been registered with the plugin.
+         * For example, if the GoCD server restarted while a pod was building,
+         * the state will be Unknown until the pod finishes its job.
+         */
         Unknown,
-        // Idle means the agent has just finished a job.
+        /**
+         * Idle means the agent has just finished a job.
+         */
         Idle,
-        // Building means the agent has been assigned a job.
+        /**
+         * Building means the agent has been assigned a job.
+         */
         Building,
     }
 
+    /**
+     * CLUSTER_PROFILE_ID is a pod annotation that contains a hash of the cluster settings
+     * that were used to create the pod.
+     */
     public static final String CLUSTER_PROFILE_ID = "go.cd/cluster-profile-id";
+
+    /**
+     * ELASTIC_PROFILE_ID is a pod annotation that contains a hash of the elastic profile settings
+     * that were used to create the pod.
+     */
     public static final String ELASTIC_PROFILE_ID = "go.cd/elastic-profile-id";
 
-    @NonNull @Builder.Default
-    Instant createdAt = Instant.now();
+    Instant createdAt;
 
-    // populated from k8s pod metadata.labels.Elastic-Agent-Environment
-    @NonNull
+    public Instant getCreatedAt() {
+        return this.createdAt;
+    }
+
+    /**
+     * environment is populated from k8s pod metadata.labels.Elastic-Agent-Environment
+     */
     String environment;
 
-    @NonNull
+    public String getEnvironment() {
+        return this.environment;
+    }
+
     String podName;
 
-    // populated from k8s pod metadata.annotations
-    // go.cd/cluster-profile-id contains uuid of the profile
-    // go.cd/elastic-profile-id contains hash of the profile
-    @NonNull @Builder.Default
-    Map<String, String> podAnnotations = Collections.emptyMap();
+    public String getPodName() {
+        return this.podName;
+    }
 
-    // populated from k8s pod metadata.labels.Elastic-Agent-Job-Id
-    @NonNull
+    /**
+     * podAnnotations is populated from k8s pod metadata.annotations
+     */
+    Map<String, String> podAnnotations;
+
+    public Map<String, String> getPodAnnotations() {
+        return Map.copyOf(this.podAnnotations);
+    }
+
+    /**
+     * jobId is populated from k8s pod metadata.labels.Elastic-Agent-Job-Id
+     */
     Long jobId;
+    public Long getJobId() {
+        return this.jobId;
+    }
 
-    @NonNull @Builder.Default
     PodState podState = PodState.Pending;
+    public PodState getPodState() {
+        return this.podState;
+    }
 
-    @NonNull @Builder.Default
     AgentState agentState = AgentState.Unknown;
+    public AgentState getAgentState() {
+        return this.agentState;
+    }
+
+    KubernetesInstance(
+            Instant createdAt,
+            String environment,
+            String podName,
+            Map<String, String> podAnnotations,
+            Long jobId,
+            PodState podState,
+            AgentState agentState) {
+        this.createdAt = createdAt;
+        this.environment = environment;
+        this.podName = podName;
+        this.podAnnotations = Map.copyOf(podAnnotations);
+        this.jobId = jobId;
+        this.podState = podState;
+        this.agentState = agentState;
+    }
 
     public static class KubernetesInstanceBuilder {
-        public KubernetesInstanceBuilder podAnnotations(Map<String, String> podAnnotations) {
-            if (podAnnotations == null) {
-                this.podAnnotations$value = Collections.emptyMap();
-            } else {
-                this.podAnnotations$value = Map.copyOf(podAnnotations);
-            }
-            this.podAnnotations$set = true;
+        Instant createdAt = Instant.now();
+        public KubernetesInstanceBuilder createdAt(Instant createdAt) {
+            this.createdAt = createdAt;
             return this;
         }
+
+        String environment;
+        public KubernetesInstanceBuilder environment(String environment) {
+            this.environment = environment;
+            return this;
+        }
+
+        String podName;
+        public KubernetesInstanceBuilder podName(String podName) {
+            this.podName = podName;
+            return this;
+        }
+
+        Map<String, String> podAnnotations = Collections.emptyMap();
+        public KubernetesInstanceBuilder podAnnotations(Map<String, String> podAnnotations) {
+            if (podAnnotations == null) {
+                this.podAnnotations = Map.of();
+            } else {
+                this.podAnnotations = Map.copyOf(podAnnotations);
+            }
+            return this;
+        }
+
+        Long jobId;
+        public KubernetesInstanceBuilder jobId(Long jobId) {
+            this.jobId = jobId;
+            return this;
+        }
+        PodState podState = PodState.Pending;
+        public KubernetesInstanceBuilder podState(PodState podState) {
+            this.podState = podState;
+            return this;
+        }
+
+        AgentState agentState = AgentState.Unknown;
+        public KubernetesInstanceBuilder agentState(AgentState agentState) {
+            this.agentState = agentState;
+            return this;
+        }
+
+        public KubernetesInstance build() {
+            return new KubernetesInstance(createdAt, environment, podName, podAnnotations, jobId, podState, agentState);
+        }
     }
+
+    public static KubernetesInstanceBuilder builder() {
+        return new KubernetesInstanceBuilder();
+    }
+
+    public KubernetesInstanceBuilder toBuilder() {
+        return new KubernetesInstanceBuilder()
+                .createdAt(createdAt)
+                .environment(environment)
+                .podName(podName)
+                .podAnnotations(podAnnotations)
+                .jobId(jobId)
+                .podState(podState)
+                .agentState(agentState);
+    }
+
 }
