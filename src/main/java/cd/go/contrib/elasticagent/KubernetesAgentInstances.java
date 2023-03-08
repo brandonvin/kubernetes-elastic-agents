@@ -27,10 +27,7 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -39,7 +36,7 @@ import static cd.go.contrib.elasticagent.KubernetesPlugin.LOG;
 import static java.text.MessageFormat.format;
 
 public class KubernetesAgentInstances implements AgentInstances<KubernetesInstance> {
-    private final ConcurrentHashMap<String, KubernetesInstance> instances = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, KubernetesInstance> instances;
     public Clock clock = Clock.DEFAULT;
 
     private KubernetesClientFactory factory;
@@ -54,8 +51,13 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
     }
 
     public KubernetesAgentInstances(KubernetesClientFactory factory, KubernetesInstanceFactory kubernetesInstanceFactory) {
+        this(factory, kubernetesInstanceFactory, Collections.emptyMap());
+    }
+
+    public KubernetesAgentInstances(KubernetesClientFactory factory, KubernetesInstanceFactory kubernetesInstanceFactory, Map<String, KubernetesInstance> initialInstances) {
         this.factory = factory;
         this.kubernetesInstanceFactory = kubernetesInstanceFactory;
+        this.instances = new ConcurrentHashMap<>(initialInstances);
     }
 
     @Override
