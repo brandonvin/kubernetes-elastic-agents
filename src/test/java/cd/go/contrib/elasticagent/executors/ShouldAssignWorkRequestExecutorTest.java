@@ -32,7 +32,6 @@ import org.mockito.Mock;
 import org.mockito.stubbing.Answer;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -47,7 +46,8 @@ public class ShouldAssignWorkRequestExecutorTest extends BaseTest {
     KubernetesClientFactory factory;
     private AgentInstances<KubernetesInstance> agentInstances;
     private KubernetesInstance instance;
-    private Map<String, String> properties = new HashMap<>();
+    private Map<String, String> instanceElasticProperties;
+    private ClusterProfileProperties instanceClusterProps;
     @Mock
     private KubernetesClient mockedClient;
     @Mock
@@ -74,31 +74,50 @@ public class ShouldAssignWorkRequestExecutorTest extends BaseTest {
         });
 
         agentInstances = new KubernetesAgentInstances(factory);
-        properties.put("foo", "bar");
-        properties.put("Image", "gocdcontrib/ubuntu-docker-elastic-agent");
-        instance = agentInstances.createIfNecessary(new CreateAgentRequest(UUID.randomUUID().toString(), properties, environment, new JobIdentifier(100L)), createClusterProfileProperties(), pluginRequest, consoleLogAppender).get();
+        instanceElasticProperties = Map.of("foo", "bar", "Image", "gocdcontrib/ubuntu-docker-elastic-agent");
+        instanceClusterProps = createClusterProfileProperties();
+        instance = agentInstances.createIfNecessary(new CreateAgentRequest(UUID.randomUUID().toString(), instanceElasticProperties, environment, new JobIdentifier(100L)), instanceClusterProps, pluginRequest, consoleLogAppender).get();
     }
 
     // TODO: Re-evaluate whether the "assign by matching job ID" behavior should even exist anymore.
     @Test
     public void shouldAssignWorkWhenJobIdMatchesPodId() throws Exception {
+        Long jobId = 100L;
+        assertThat(jobId).isEqualTo(instance.getJobId());
         JobIdentifier jobIdentifier = new JobIdentifier("test-pipeline", 1L, "Test Pipeline", "test-stage", "1", "test-job", 100L);
-        ShouldAssignWorkRequest request = new ShouldAssignWorkRequest(new Agent(instance.getPodName(), null, null, null), environment, properties, jobIdentifier);
+        ShouldAssignWorkRequest request = new ShouldAssignWorkRequest(new Agent(instance.getPodName(), null, null, null), environment, instanceElasticProperties, jobIdentifier);
         GoPluginApiResponse response = new ShouldAssignWorkRequestExecutor(request, agentInstances).execute();
         assertThat(response.responseCode()).isEqualTo(200);
         assertThat(response.responseBody()).isEqualTo("true");
     }
 
-    // TODO: This test is no longer valid with pod reuse. Re-evaluate whether the "assign by matching job ID" behavior should even exist anymore.
-    /*
     @Test
-    public void shouldNotAssignWorkWhenJobIdDiffersFromPodId() throws Exception {
-        long mismatchingJobId = 200L;
-        JobIdentifier jobIdentifier = new JobIdentifier("test-pipeline", 1L, "Test Pipeline", "test-stage", "1", "test-job", mismatchingJobId);
-        ShouldAssignWorkRequest request = new ShouldAssignWorkRequest(new Agent(instance.getPodName(), null, null, null), "FooEnv", properties, jobIdentifier);
+    public void shouldAssignWorkWhenElasticInfoMatches() {
+        Long jobId = 333L;
+        assertThat(jobId).isNotEqualTo(instance.getJobId());
+        JobIdentifier jobIdentifier = new JobIdentifier("test-pipeline", 1L, "Test Pipeline", "test-stage", "1", "test-job", jobId);
+        ShouldAssignWorkRequest request = new ShouldAssignWorkRequest(new Agent(instance.getPodName(), null, null, null), environment, instanceElasticProperties, jobIdentifier);
+        GoPluginApiResponse response = new ShouldAssignWorkRequestExecutor(request, agentInstances).execute();
+        assertThat(response.responseCode()).isEqualTo(200);
+        assertThat(response.responseBody()).isEqualTo("true");
+    }
+
+    @Test
+    public void shouldNotAssignWorkWhenElasticInfoDoesNotMatch() {
+        Long jobId = 333L;
+        assertThat(jobId).isNotEqualTo(instance.getJobId());
+
+        ClusterProfileProperties requestClusterProps = new ClusterProfileProperties("http://foo:8154/go", null, null);
+        assertThat(requestClusterProps).isNotEqualTo(instanceClusterProps);
+
+        Map<String, String> requestElasticProperties = Map.of("something", "different");
+        assertThat(requestElasticProperties).isNotEqualTo(instanceElasticProperties);
+
+        JobIdentifier jobIdentifier = new JobIdentifier("test-pipeline", 1L, "Test Pipeline", "test-stage", "1", "test-job", jobId);
+        ShouldAssignWorkRequest request = new ShouldAssignWorkRequest(new Agent(instance.getPodName(), null, null, null), environment, requestElasticProperties, jobIdentifier, requestClusterProps);
         GoPluginApiResponse response = new ShouldAssignWorkRequestExecutor(request, agentInstances).execute();
         assertThat(response.responseCode()).isEqualTo(200);
         assertThat(response.responseBody()).isEqualTo("false");
     }
-     */
+
 }
