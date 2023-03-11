@@ -186,20 +186,4 @@ public class KubernetesAgentInstancesTest {
         verify(mockKubernetesInstanceFactory, times(0)).create(any(), any(), any(), any());
     }
 
-    // TODO: plugin has been changed to only refreshAll on ping requests. Re-evaluate this test.
-    /*
-    @Test
-    public void shouldSyncPodsStateFromClusterBeforeCreatingPod() throws IOException {
-        when(mockKubernetesInstanceFactory.create(mockCreateAgentRequest, mockPluginSettings, mockKubernetesClient, mockPluginRequest)).
-                thenReturn(new KubernetesInstance(new DateTime(), "test", "test-agent", new HashMap<>(), 100L, PodState.Running));
-
-        final KubernetesAgentInstances agentInstances = new KubernetesAgentInstances(factory, mockKubernetesInstanceFactory);
-
-        agentInstances.createIfNecessary(mockCreateAgentRequest, mockPluginSettings, mockPluginRequest, consoleLogAppender).get();
-
-        InOrder inOrder = inOrder(mockKubernetesInstanceFactory, mockedOperation);
-        inOrder.verify(mockedOperation).list();
-        inOrder.verify(mockKubernetesInstanceFactory).create(mockCreateAgentRequest, mockPluginSettings, mockKubernetesClient, mockPluginRequest);
-    }
-     */
 }

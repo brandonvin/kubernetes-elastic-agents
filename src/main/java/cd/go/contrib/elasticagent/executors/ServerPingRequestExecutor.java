@@ -30,19 +30,19 @@ import static cd.go.contrib.elasticagent.KubernetesPlugin.LOG;
 
 public class ServerPingRequestExecutor implements RequestExecutor {
 
-    private final ServerPingRequest serverPingRequest;
+    private final List<ClusterProfileProperties> allClusterProfileProperties;
     private final Map<String, KubernetesAgentInstances> clusterSpecificAgentInstances;
     private final PluginRequest pluginRequest;
 
-    public ServerPingRequestExecutor(ServerPingRequest serverPingRequest, Map<String, KubernetesAgentInstances> clusterSpecificAgentInstances, PluginRequest pluginRequest) {
-        this.serverPingRequest = serverPingRequest;
+    public ServerPingRequestExecutor(List<ClusterProfileProperties> allClusterProfileProperties, Map<String, KubernetesAgentInstances> clusterSpecificAgentInstances, PluginRequest pluginRequest) {
+        this.allClusterProfileProperties = List.copyOf(allClusterProfileProperties);
         this.clusterSpecificAgentInstances = clusterSpecificAgentInstances;
         this.pluginRequest = pluginRequest;
     }
 
     @Override
     public GoPluginApiResponse execute() throws Exception {
-        List<ClusterProfileProperties> allClusterProfileProperties = serverPingRequest.allClusterProfileProperties();
+        refreshAllClusterInstances();
 
         for (ClusterProfileProperties clusterProfileProperties : allClusterProfileProperties) {
             performCleanupForACluster(clusterProfileProperties, clusterSpecificAgentInstances.get(clusterProfileProperties.uuid()));
@@ -52,7 +52,21 @@ public class ServerPingRequestExecutor implements RequestExecutor {
         return DefaultGoPluginApiResponse.success("");
     }
 
-    private void performCleanupForACluster(ClusterProfileProperties clusterProfileProperties, KubernetesAgentInstances kubernetesAgentInstances) throws Exception {
+    private void refreshAllClusterInstances() {
+        for (ClusterProfileProperties clusterProfileProperties : allClusterProfileProperties) {
+            String clusterId = clusterProfileProperties.uuid();
+            KubernetesAgentInstances instances = clusterSpecificAgentInstances.get(clusterId);
+            if (instances != null) {
+                instances.refreshAll(clusterProfileProperties);
+            } else {
+                instances = new KubernetesAgentInstances();
+                instances.refreshAll(clusterProfileProperties);
+                clusterSpecificAgentInstances.put(clusterId, instances);
+            }
+        }
+    }
+
+    public void performCleanupForACluster(ClusterProfileProperties clusterProfileProperties, KubernetesAgentInstances kubernetesAgentInstances) throws Exception {
         Agents allAgents = pluginRequest.listAgents();
         Agents agentsToDisable = kubernetesAgentInstances.instancesCreatedAfterTimeout(clusterProfileProperties, allAgents);
         disableIdleAgents(agentsToDisable);
@@ -63,7 +77,7 @@ public class ServerPingRequestExecutor implements RequestExecutor {
         kubernetesAgentInstances.terminateUnregisteredInstances(clusterProfileProperties, allAgents);
     }
 
-    private void checkForPossiblyMissingAgents() throws Exception {
+    public void checkForPossiblyMissingAgents() throws Exception {
         Collection<Agent> allAgents = pluginRequest.listAgents().agents();
 
         List<Agent> missingAgents = allAgents.stream().filter(agent -> clusterSpecificAgentInstances.values().stream()

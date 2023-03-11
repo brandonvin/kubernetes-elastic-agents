@@ -217,13 +217,23 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
         return new Agents(oldAgents);
     }
 
+    public List<Pod> listAgentPods(KubernetesClient client) {
+        if (client == null) {
+            throw new IllegalArgumentException("client is null");
+        }
+        return client.pods()
+                .withLabel(Constants.KUBERNETES_POD_KIND_LABEL_KEY, Constants.KUBERNETES_POD_KIND_LABEL_VALUE)
+                .list()
+                .getItems();
+    }
+
     @Override
     public void refreshAll(PluginSettings properties) {
         LOG.debug("[Refresh Instances] Syncing k8s elastic agent pod information for cluster {}.", properties);
-        PodList list = null;
+        List<Pod> pods = null;
         try {
             KubernetesClient client = factory.client(properties);
-            list = client.pods().withLabel(Constants.KUBERNETES_POD_KIND_LABEL_KEY, Constants.KUBERNETES_POD_KIND_LABEL_VALUE).list();
+            pods = listAgentPods(client);
         } catch (Exception e) {
             LOG.error("Error occurred while trying to list kubernetes pods:", e);
 
@@ -231,11 +241,11 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
                 LOG.error("Error caused due to SocketTimeoutException. This generally happens due to stale kubernetes client. Clearing out existing kubernetes client and creating a new one!");
                 factory.clearOutExistingClient();
                 KubernetesClient client = factory.client(properties);
-                list = client.pods().withLabel(Constants.KUBERNETES_POD_KIND_LABEL_KEY, Constants.KUBERNETES_POD_KIND_LABEL_VALUE).list();
+                pods = listAgentPods(client);
             }
         }
 
-        if (list == null) {
+        if (pods == null) {
             LOG.info("Did not find any running kubernetes pods.");
             return;
         }
@@ -243,7 +253,7 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
         Map<String, KubernetesInstance> oldInstances = Map.copyOf(instances);
         instances.clear();
 
-        for (Pod pod : list.getItems()) {
+        for (Pod pod : pods) {
             String podName = pod.getMetadata().getName();
             // preserve pod's agent state
             KubernetesInstance newInstance = kubernetesInstanceFactory.fromKubernetesPod(pod);

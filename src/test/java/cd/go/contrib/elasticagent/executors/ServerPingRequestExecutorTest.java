@@ -113,7 +113,7 @@ public class ServerPingRequestExecutorTest extends BaseTest {
 
         assertTrue(clusterSpecificInstances.get(clusterProfileProperties.uuid()).hasInstance(k8sPodForAgent1.getPodName()));
 
-        new ServerPingRequestExecutor(serverPingRequest, clusterSpecificInstances, pluginRequest).execute();
+        new ServerPingRequestExecutor(serverPingRequest.allClusterProfileProperties(), clusterSpecificInstances, pluginRequest).execute();
 
         verify(pluginRequest, atLeastOnce()).disableAgents(Collections.singletonList(agent1));
         verify(pluginRequest, atLeastOnce()).deleteAgents(Collections.singletonList(agent1AfterDisabling));
@@ -187,7 +187,7 @@ public class ServerPingRequestExecutorTest extends BaseTest {
         assertTrue(clusterSpecificInstances.get(clusterProfilePropertiesForCluster1.uuid()).hasInstance(k8sPodForAgent1.getPodName()));
         assertTrue(clusterSpecificInstances.get(clusterProfilePropertiesForCluster2.uuid()).hasInstance(k8sPodForAgent4.getPodName()));
 
-        new ServerPingRequestExecutor(serverPingRequest, clusterSpecificInstances, pluginRequest).execute();
+        new ServerPingRequestExecutor(serverPingRequest.allClusterProfileProperties(), clusterSpecificInstances, pluginRequest).execute();
 
         verify(pluginRequest, atLeastOnce()).disableAgents(Collections.singletonList(agent1));
         verify(pluginRequest, atLeastOnce()).deleteAgents(Collections.singletonList(agent1AfterDisabling));
@@ -241,7 +241,7 @@ public class ServerPingRequestExecutorTest extends BaseTest {
         assertTrue(clusterSpecificInstances.get(clusterProfilePropertiesForCluster1.uuid()).hasInstance(k8sUnregisteredCluster1Pod1.getPodName()));
         assertTrue(clusterSpecificInstances.get(clusterProfilePropertiesForCluster1.uuid()).hasInstance(k8sUnregisteredCluster1Pod2.getPodName()));
 
-        new ServerPingRequestExecutor(serverPingRequest, clusterSpecificInstances, pluginRequest).execute();
+        new ServerPingRequestExecutor(serverPingRequest.allClusterProfileProperties(), clusterSpecificInstances, pluginRequest).execute();
 
         assertFalse(clusterSpecificInstances.get(clusterProfilePropertiesForCluster1.uuid()).hasInstance(k8sUnregisteredCluster1Pod1.getPodName()));
         assertTrue(clusterSpecificInstances.get(clusterProfilePropertiesForCluster1.uuid()).hasInstance(k8sUnregisteredCluster1Pod2.getPodName()));
@@ -268,10 +268,37 @@ public class ServerPingRequestExecutorTest extends BaseTest {
 
         when(pluginRequest.listAgents()).thenReturn(allAgents);
 
-        new ServerPingRequestExecutor(serverPingRequest, clusterSpecificInstances, pluginRequest).execute();
+        new ServerPingRequestExecutor(serverPingRequest.allClusterProfileProperties(), clusterSpecificInstances, pluginRequest).execute();
 
         verify(pluginRequest, atLeastOnce()).disableAgents(Arrays.asList(agent2, agent1));
         verify(pluginRequest, atLeastOnce()).deleteAgents(Arrays.asList(agent2, agent1));
     }
-}
 
+    @Test
+    public void shouldRefreshPodsForAllClusters() throws Exception {
+        KubernetesAgentInstances agentInstancesForCluster1 = mock(KubernetesAgentInstances.class);
+        when(agentInstancesForCluster1.listAgentPods(any())).thenReturn(Collections.emptyList());
+
+        KubernetesAgentInstances agentInstancesForCluster2 = mock(KubernetesAgentInstances.class);
+        when(agentInstancesForCluster2.listAgentPods(any())).thenReturn(Collections.emptyList());
+
+        ClusterProfileProperties clusterProfilePropertiesForCluster1 = new ClusterProfileProperties("https://localhost:8154/go", "https://cluster1", null);
+        ClusterProfileProperties clusterProfilePropertiesForCluster2 = new ClusterProfileProperties("https://localhost:8154/go", "https://cluster2", null);
+
+        Map<String, KubernetesAgentInstances> clusterSpecificInstances = Map.of(
+                clusterProfilePropertiesForCluster1.uuid(), agentInstancesForCluster1,
+                clusterProfilePropertiesForCluster2.uuid(), agentInstancesForCluster2
+        );
+
+        List<ClusterProfileProperties> allClusterProps = List.of(clusterProfilePropertiesForCluster1, clusterProfilePropertiesForCluster2);
+
+        PluginRequest pluginRequest = mock(PluginRequest.class);
+        ServerPingRequestExecutor spy = spy(new ServerPingRequestExecutor(allClusterProps, clusterSpecificInstances, pluginRequest));
+        doNothing().when(spy).performCleanupForACluster(any(), any());
+        doNothing().when(spy).checkForPossiblyMissingAgents();
+        spy.execute();
+        verify(agentInstancesForCluster1, times(1)).refreshAll(clusterProfilePropertiesForCluster1);
+        verify(agentInstancesForCluster2, times(1)).refreshAll(clusterProfilePropertiesForCluster2);
+    }
+
+}
