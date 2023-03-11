@@ -79,8 +79,8 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
 
     private List<KubernetesInstance> findPodsEligibleForReuse(
         CreateAgentRequest request,
-        PluginSettings settings,
-        PluginRequest pluginRequest) {
+        // TODO: use PluginSettings to enable/disable reuse
+        PluginSettings settings) {
 
         Long jobId = request.jobIdentifier().getJobId();
         String jobClusterProfileId = Util.objectUUID(request.clusterProfileProperties());
@@ -94,33 +94,35 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
                 continue;
             }
 
-            // TODO: refactor
-            String podClusterProfileId = instance.getPodAnnotations().getOrDefault(KubernetesInstance.CLUSTER_PROFILE_ID, "unknown");
-            String podElasticProfileId = instance.getPodAnnotations().getOrDefault(KubernetesInstance.ELASTIC_PROFILE_ID, "unknown");
+            String podClusterProfileId = instance.getPodAnnotations().get(KubernetesInstance.CLUSTER_PROFILE_ID);
+            String podElasticProfileId = instance.getPodAnnotations().get(KubernetesInstance.ELASTIC_PROFILE_ID);
 
-            if (podClusterProfileId.equals("unknown") || podElasticProfileId.equals("unknown")) {
-                LOG.debug("[reuse] Pod {} is missing one of cluster profile ID or elastic profile ID ({}, {})",
+            if (podClusterProfileId == null || podElasticProfileId == null) {
+                LOG.debug("[reuse] Pod {} is missing one of cluster profile ID or elastic profile ID ({}, {}), not considering for reuse",
                   instance.getPodName(),
                   podClusterProfileId, podElasticProfileId);
+                continue;
             }
 
             boolean sameClusterProfile = podClusterProfileId.equals(jobClusterProfileId);
             boolean sameElasticProfile = podElasticProfileId.equals(jobElasticProfileId);
 
-            // TODO: guard against pod state as well - e.g. pending, terminating?
-            // TODO: only reuse if pod is running?
             boolean instanceIsIdle = instance.getAgentState().equals(KubernetesInstance.AgentState.Idle);
-            boolean isReusable = sameElasticProfile && sameClusterProfile && instanceIsIdle;
+            boolean podIsRunning = instance.getPodState().equals(PodState.Running);
+            boolean isReusable = sameElasticProfile && sameClusterProfile && instanceIsIdle && podIsRunning;
 
-            LOG.info("[reuse] Pod eligible for reuse? {}. jobId={} has clusterProfileId={}, elasticProfileId={}; pod {} is in state {} with clusterProfileId={}, elasticProfileId={}",
-                  isReusable ? "Yes" : "No",
-                  jobId,
-                  jobClusterProfileId,
-                  jobElasticProfileId,
-                  instance.getPodName(),
-                  instance.getAgentState(),
-                  podClusterProfileId,
-                  podElasticProfileId);
+            LOG.info(
+                    "[reuse] Pod eligible for reuse? {}. jobId={} has clusterProfileId={}, elasticProfileId={}; pod {} has agentState={}, podState={}, clusterProfileId={}, elasticProfileId={}",
+                    isReusable,
+                    jobId,
+                    jobClusterProfileId,
+                    jobElasticProfileId,
+                    instance.getPodName(),
+                    instance.getAgentState(),
+                    instance.getPodState(),
+                    podClusterProfileId,
+                    podElasticProfileId
+            );
 
             if (isReusable) {
                 eligiblePods.add(instance);
@@ -137,7 +139,7 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
                                                                  ConsoleLogAppender consoleLogAppender) {
         JobIdentifier jobIdentifier = request.jobIdentifier();
 
-        List<KubernetesInstance> reusablePods = findPodsEligibleForReuse(request, settings, pluginRequest);
+        List<KubernetesInstance> reusablePods = findPodsEligibleForReuse(request, settings);
         LOG.info("[reuse] Found {} pods eligible for reuse for CreateAgentRequest for job {}: {}",
               reusablePods.size(),
               jobIdentifier.getJobId(),
