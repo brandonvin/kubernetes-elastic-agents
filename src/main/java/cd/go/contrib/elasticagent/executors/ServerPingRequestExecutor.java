@@ -52,14 +52,18 @@ public class ServerPingRequestExecutor implements RequestExecutor {
         return DefaultGoPluginApiResponse.success("");
     }
 
-    private void refreshAllClusterInstances() {
+    public KubernetesAgentInstances newKubernetesInstances() {
+        return new KubernetesAgentInstances();
+    }
+
+    public void refreshAllClusterInstances() {
         for (ClusterProfileProperties clusterProfileProperties : allClusterProfileProperties) {
             String clusterId = clusterProfileProperties.uuid();
             KubernetesAgentInstances instances = clusterSpecificAgentInstances.get(clusterId);
             if (instances != null) {
                 instances.refreshAll(clusterProfileProperties);
             } else {
-                instances = new KubernetesAgentInstances();
+                instances = newKubernetesInstances();
                 instances.refreshAll(clusterProfileProperties);
                 clusterSpecificAgentInstances.put(clusterId, instances);
             }

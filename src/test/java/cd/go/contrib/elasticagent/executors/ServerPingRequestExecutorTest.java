@@ -37,6 +37,7 @@ import static cd.go.contrib.elasticagent.Constants.ENVIRONMENT_LABEL_KEY;
 import static cd.go.contrib.elasticagent.Constants.JOB_ID_LABEL_KEY;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -293,6 +294,8 @@ public class ServerPingRequestExecutorTest extends BaseTest {
         List<ClusterProfileProperties> allClusterProps = List.of(clusterProfilePropertiesForCluster1, clusterProfilePropertiesForCluster2);
 
         PluginRequest pluginRequest = mock(PluginRequest.class);
+
+        // Use spy to disable methods we're not testing
         ServerPingRequestExecutor spy = spy(new ServerPingRequestExecutor(allClusterProps, clusterSpecificInstances, pluginRequest));
         doNothing().when(spy).performCleanupForACluster(any(), any());
         doNothing().when(spy).checkForPossiblyMissingAgents();
@@ -301,4 +304,23 @@ public class ServerPingRequestExecutorTest extends BaseTest {
         verify(agentInstancesForCluster2, times(1)).refreshAll(clusterProfilePropertiesForCluster2);
     }
 
+    @Test
+    public void shouldInitializeInstancesAndRefreshPodsForNewClusters() throws Exception {
+        ClusterProfileProperties clusterProfilePropertiesForCluster1 = new ClusterProfileProperties("https://localhost:8154/go", "https://cluster1", null);
+        List<ClusterProfileProperties> allClusterProps = List.of(clusterProfilePropertiesForCluster1);
+        Map<String, KubernetesAgentInstances> clusterSpecificInstances = new HashMap<>();
+        KubernetesAgentInstances agentInstancesForCluster1 = mock(KubernetesAgentInstances.class);
+        PluginRequest pluginRequest = mock(PluginRequest.class);
+
+        // Use spy to disable methods we're not testing
+        ServerPingRequestExecutor spy = spy(new ServerPingRequestExecutor(allClusterProps, clusterSpecificInstances, pluginRequest));
+        doNothing().when(spy).performCleanupForACluster(any(), any());
+        doNothing().when(spy).checkForPossiblyMissingAgents();
+        when(spy.newKubernetesInstances()).thenReturn(agentInstancesForCluster1);
+        spy.execute();
+
+        verify(spy, times(1)).newKubernetesInstances();
+        assertThat(clusterSpecificInstances).isEqualTo(Map.of(clusterProfilePropertiesForCluster1.uuid(), agentInstancesForCluster1));
+        verify(agentInstancesForCluster1, times(1)).refreshAll(clusterProfilePropertiesForCluster1);
+    }
 }
