@@ -37,6 +37,7 @@ public class GetClusterProfileMetadataExecutor implements RequestExecutor {
     public static final Metadata NAMESPACE = new Metadata("namespace", false, false);
     public static final Metadata SECURITY_TOKEN = new Metadata("security_token", true, true);
     public static final Metadata CLUSTER_CA_CERT = new Metadata("kubernetes_cluster_ca_cert", false, true);
+    public static final Metadata ENABLE_AGENT_REUSE = new Metadata("enable_agent_reuse", false, false);
 
     public static final List<Metadata> FIELDS = new ArrayList<>();
 
@@ -48,6 +49,7 @@ public class GetClusterProfileMetadataExecutor implements RequestExecutor {
         FIELDS.add(NAMESPACE);
         FIELDS.add(SECURITY_TOKEN);
         FIELDS.add(CLUSTER_CA_CERT);
+        FIELDS.add(ENABLE_AGENT_REUSE);
     }
 
     @Override

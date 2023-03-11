@@ -55,6 +55,10 @@ public class PluginSettings {
     @SerializedName("namespace")
     private String namespace;
 
+    @Expose
+    @SerializedName("enable_agent_reuse")
+    private boolean enableAgentReuse;
+
     private Duration autoRegisterPeriod;
 
     public PluginSettings() {
@@ -108,6 +112,10 @@ public class PluginSettings {
 
     public String getNamespace() {
         return getOrDefault(this.namespace, "default");
+    }
+
+    public boolean getEnableAgentReuse() {
+        return enableAgentReuse;
     }
 
     private <T> T getOrDefault(T t, T defaultValue) {

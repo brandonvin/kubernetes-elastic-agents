@@ -27,6 +27,8 @@ import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import java.util.*;
 
 import static cd.go.contrib.elasticagent.GoServerURLMetadata.GO_SERVER_URL;
+import static cd.go.contrib.elasticagent.KubernetesPlugin.LOG;
+import static cd.go.contrib.elasticagent.executors.GetClusterProfileMetadataExecutor.ENABLE_AGENT_REUSE;
 import static cd.go.contrib.elasticagent.executors.GetClusterProfileMetadataExecutor.FIELDS;
 import static cd.go.contrib.elasticagent.utils.Util.GSON;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -56,6 +58,7 @@ public class ClusterProfileValidateRequestExecutor implements RequestExecutor {
         }
 
         validateGoServerUrl(result);
+        validateEnableAgentReuse(result);
         Set<String> set = new HashSet<>(request.getProperties().keySet());
         set.removeAll(knownFields);
 
@@ -84,5 +87,11 @@ public class ClusterProfileValidateRequestExecutor implements RequestExecutor {
                 result.add(error);
             }
         }
+    }
+
+    private void validateEnableAgentReuse(ArrayList<Map<String, String>> result) {
+        String key = ENABLE_AGENT_REUSE.getKey();
+        String value = request.getProperties().get(key);
+        LOG.info("[Validate Cluster Profile] Value of {} is {}", key, Objects.toString(value));
     }
 }
