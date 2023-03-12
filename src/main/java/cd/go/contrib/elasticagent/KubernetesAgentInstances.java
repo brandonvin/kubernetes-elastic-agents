@@ -138,19 +138,34 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
                                                                  PluginRequest pluginRequest,
                                                                  ConsoleLogAppender consoleLogAppender) {
         JobIdentifier jobIdentifier = request.jobIdentifier();
+        Long jobId = jobIdentifier.getJobId();
 
+        // Agent reuse disabled - create a new pod only if one hasn't already been created for this job ID.
+        if (!settings.getEnableAgentReuse()) {
+            // Already created a pod for this job ID.
+            if (isAgentCreatedForJob(jobId)) {
+                String message = format("[Create Agent Request] Request for creating an agent for Job Identifier [{0}] has already been scheduled. Skipping current request.", jobIdentifier);
+                LOG.warn(message);
+                consoleLogAppender.accept(message);
+                return Optional.empty();
+            }
+            // No pod created yet for this job ID. Create one.
+            KubernetesClient client = factory.client(settings);
+            KubernetesInstance instance = kubernetesInstanceFactory.create(request, settings, client, pluginRequest);
+            consoleLogAppender.accept(String.format("Created pod: %s", instance.getPodName()));
+            instance = instance.toBuilder().agentState(AgentState.Building).build();
+            register(instance);
+            consoleLogAppender.accept(String.format("Agent pod %s created. Waiting for it to register to the GoCD server.", instance.getPodName()));
+            return Optional.of(instance);
+        }
+
+        // Agent reuse enabled - look for any extant pods that match this job,
+        // and create a new one only if there are none.
         List<KubernetesInstance> reusablePods = findPodsEligibleForReuse(request, settings);
         LOG.info("[reuse] Found {} pods eligible for reuse for CreateAgentRequest for job {}: {}",
               reusablePods.size(),
-              jobIdentifier.getJobId(),
+              jobId,
               reusablePods.stream().map(pod -> pod.getPodName()).collect(Collectors.toList()));
-
-        if (isAgentCreatedForJob(jobIdentifier.getJobId())) {
-            String message = format("[Create Agent Request] Request for creating an agent for Job Identifier [{0}] has already been scheduled. Skipping current request.", jobIdentifier);
-            LOG.warn(message);
-            consoleLogAppender.accept(message);
-            return Optional.empty();
-        }
 
         if (reusablePods.isEmpty()) {
             KubernetesClient client = factory.client(settings);
