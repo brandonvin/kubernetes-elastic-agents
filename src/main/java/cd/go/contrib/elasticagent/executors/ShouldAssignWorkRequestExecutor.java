@@ -47,15 +47,20 @@ public class ShouldAssignWorkRequestExecutor implements RequestExecutor {
 
             Long jobId = request.jobIdentifier().getJobId();
 
-            // TODO: not sure if matching on job ID is still needed.
-            // Try disabling and see what happens.
-            if (jobId.equals(instance.getJobId())) {
-                LOG.debug("[should-assign-work] Job with identifier {} can be assigned to pod {}.",
-                        request.jobIdentifier(),
-                        instance.getPodName());
-                return instance.toBuilder().agentState(KubernetesInstance.AgentState.Building).build();
+            // Agent reuse disabled - only assign if the agent pod was created exactly for this job ID.
+            if (!request.clusterProfileProperties().getEnableAgentReuse()) {
+                // Job ID matches - assign work and mark the instance as building.
+                if (jobId.equals(instance.getJobId())) {
+                    LOG.debug("[should-assign-work] Job with identifier {} can be assigned to pod {}.",
+                            request.jobIdentifier(),
+                            instance.getPodName());
+                    return instance.toBuilder().agentState(KubernetesInstance.AgentState.Building).build();
+                }
+                // Job ID doesn't match - don't assign work.
+                return null;
             }
 
+            // Agent reuse enabled - assign work if the job's cluster profile and elastic profile match this agent.
             String jobClusterProfileId = Util.objectUUID(request.clusterProfileProperties());
             String podClusterProfileId = instance.getPodAnnotations().getOrDefault(KubernetesInstance.CLUSTER_PROFILE_ID, "unknown");
             boolean matchClusterProfile = jobClusterProfileId.equals(podClusterProfileId);
@@ -76,7 +81,7 @@ public class ShouldAssignWorkRequestExecutor implements RequestExecutor {
                 return instance.toBuilder().agentState(KubernetesInstance.AgentState.Building).build();
             }
 
-            LOG.info(String.format("[should-assign-work] No KubernetesInstance can handle request %s", request));
+            LOG.info("[should-assign-work] No KubernetesInstance can handle request {}", request);
             return null;
         });
 
