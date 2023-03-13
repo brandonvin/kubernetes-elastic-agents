@@ -49,16 +49,16 @@ public class KubernetesInstance {
     }
 
     /**
-     * CLUSTER_PROFILE_ID is a pod annotation that contains a hash of the cluster settings
+     * CLUSTER_PROFILE_HASH is a pod annotation that contains a hash of the cluster settings
      * that were used to create the pod.
      */
-    public static final String CLUSTER_PROFILE_ID = "go.cd/cluster-profile-id";
+    public static final String CLUSTER_PROFILE_HASH = "go.cd/cluster-profile-hash";
 
     /**
-     * ELASTIC_PROFILE_ID is a pod annotation that contains a hash of the elastic profile settings
+     * ELASTIC_PROFILE_HASH is a pod annotation that contains a hash of the elastic profile settings
      * that were used to create the pod.
      */
-    public static final String ELASTIC_PROFILE_ID = "go.cd/elastic-profile-id";
+    public static final String ELASTIC_PROFILE_HASH = "go.cd/elastic-profile-hash";
 
     Instant createdAt;
 

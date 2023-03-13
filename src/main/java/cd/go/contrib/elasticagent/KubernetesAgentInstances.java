@@ -21,7 +21,6 @@ import cd.go.contrib.elasticagent.requests.CreateAgentRequest;
 import cd.go.contrib.elasticagent.KubernetesInstance.AgentState;
 import cd.go.contrib.elasticagent.utils.Util;
 import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 
 import java.net.SocketTimeoutException;
@@ -79,8 +78,8 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
 
     private List<KubernetesInstance> findPodsEligibleForReuse(CreateAgentRequest request) {
         Long jobId = request.jobIdentifier().getJobId();
-        String jobClusterProfileId = Util.objectUUID(request.clusterProfileProperties());
-        String jobElasticProfileId = Util.objectUUID(request.elasticProfileProperties());
+        String jobClusterProfileHash = Util.objectUUID(request.clusterProfileProperties());
+        String jobElasticProfileHash = Util.objectUUID(request.elasticProfileProperties());
 
         List<KubernetesInstance> eligiblePods = new ArrayList<>();
 
@@ -90,18 +89,18 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
                 continue;
             }
 
-            String podClusterProfileId = instance.getPodAnnotations().get(KubernetesInstance.CLUSTER_PROFILE_ID);
-            String podElasticProfileId = instance.getPodAnnotations().get(KubernetesInstance.ELASTIC_PROFILE_ID);
+            String podClusterProfileHash = instance.getPodAnnotations().get(KubernetesInstance.CLUSTER_PROFILE_HASH);
+            String podElasticProfileHash = instance.getPodAnnotations().get(KubernetesInstance.ELASTIC_PROFILE_HASH);
 
-            if (podClusterProfileId == null || podElasticProfileId == null) {
+            if (podClusterProfileHash == null || podElasticProfileHash == null) {
                 LOG.debug("[reuse] Pod {} is missing one of cluster profile ID or elastic profile ID ({}, {}), not considering for reuse",
                   instance.getPodName(),
-                  podClusterProfileId, podElasticProfileId);
+                  podClusterProfileHash, podElasticProfileHash);
                 continue;
             }
 
-            boolean sameClusterProfile = podClusterProfileId.equals(jobClusterProfileId);
-            boolean sameElasticProfile = podElasticProfileId.equals(jobElasticProfileId);
+            boolean sameClusterProfile = podClusterProfileHash.equals(jobClusterProfileHash);
+            boolean sameElasticProfile = podElasticProfileHash.equals(jobElasticProfileHash);
 
             boolean instanceIsIdle = instance.getAgentState().equals(KubernetesInstance.AgentState.Idle);
             boolean podIsRunning = instance.getPodState().equals(PodState.Running);
@@ -111,13 +110,13 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
                     "[reuse] Pod eligible for reuse? {}. jobId={} has clusterProfileId={}, elasticProfileId={}; pod {} has agentState={}, podState={}, clusterProfileId={}, elasticProfileId={}",
                     isReusable,
                     jobId,
-                    jobClusterProfileId,
-                    jobElasticProfileId,
+                    jobClusterProfileHash,
+                    jobElasticProfileHash,
                     instance.getPodName(),
                     instance.getAgentState(),
                     instance.getPodState(),
-                    podClusterProfileId,
-                    podElasticProfileId
+                    podClusterProfileHash,
+                    podElasticProfileHash
             );
 
             if (isReusable) {

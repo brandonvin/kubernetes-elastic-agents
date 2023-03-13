@@ -210,8 +210,8 @@ public class KubernetesAgentInstancesIntegrationTest {
         Map<String, String> expectedAnnotations = new HashMap<>();
         expectedAnnotations.putAll(createAgentRequest.elasticProfileProperties());
         expectedAnnotations.put(Constants.JOB_IDENTIFIER_LABEL_KEY, new Gson().toJson(createAgentRequest.jobIdentifier()));
-        expectedAnnotations.put(KubernetesInstance.CLUSTER_PROFILE_ID, Util.objectUUID(createAgentRequest.clusterProfileProperties()));
-        expectedAnnotations.put(KubernetesInstance.ELASTIC_PROFILE_ID, Util.objectUUID(createAgentRequest.elasticProfileProperties()));
+        expectedAnnotations.put(KubernetesInstance.CLUSTER_PROFILE_HASH, Util.objectUUID(createAgentRequest.clusterProfileProperties()));
+        expectedAnnotations.put(KubernetesInstance.ELASTIC_PROFILE_HASH, Util.objectUUID(createAgentRequest.elasticProfileProperties()));
         assertThat(elasticAgentPod.getMetadata().getAnnotations()).isEqualTo(expectedAnnotations);
     }
 
@@ -331,8 +331,8 @@ public class KubernetesAgentInstancesIntegrationTest {
         expectedAnnotations.putAll(createAgentRequest.elasticProfileProperties());
         expectedAnnotations.put("annotation-key", "my-fancy-annotation-value");
         expectedAnnotations.put(Constants.JOB_IDENTIFIER_LABEL_KEY, new Gson().toJson(createAgentRequest.jobIdentifier()));
-        expectedAnnotations.put(KubernetesInstance.CLUSTER_PROFILE_ID, Util.objectUUID(createAgentRequest.clusterProfileProperties()));
-        expectedAnnotations.put(KubernetesInstance.ELASTIC_PROFILE_ID, Util.objectUUID(createAgentRequest.elasticProfileProperties()));
+        expectedAnnotations.put(KubernetesInstance.CLUSTER_PROFILE_HASH, Util.objectUUID(createAgentRequest.clusterProfileProperties()));
+        expectedAnnotations.put(KubernetesInstance.ELASTIC_PROFILE_HASH, Util.objectUUID(createAgentRequest.elasticProfileProperties()));
 
         assertThat(elasticAgentPod.getMetadata().getAnnotations()).isEqualTo(expectedAnnotations);
     }
@@ -457,8 +457,8 @@ public class KubernetesAgentInstancesIntegrationTest {
         expectedAnnotations.putAll(createAgentRequest.elasticProfileProperties());
         expectedAnnotations.put("annotation-key", "my-fancy-annotation-value");
         expectedAnnotations.put(Constants.JOB_IDENTIFIER_LABEL_KEY, new Gson().toJson(createAgentRequest.jobIdentifier()));
-        expectedAnnotations.put(KubernetesInstance.CLUSTER_PROFILE_ID, Util.objectUUID(createAgentRequest.clusterProfileProperties()));
-        expectedAnnotations.put(KubernetesInstance.ELASTIC_PROFILE_ID, Util.objectUUID(createAgentRequest.elasticProfileProperties()));
+        expectedAnnotations.put(KubernetesInstance.CLUSTER_PROFILE_HASH, Util.objectUUID(createAgentRequest.clusterProfileProperties()));
+        expectedAnnotations.put(KubernetesInstance.ELASTIC_PROFILE_HASH, Util.objectUUID(createAgentRequest.elasticProfileProperties()));
 
         assertThat(elasticAgentPod.getMetadata().getAnnotations()).isEqualTo(expectedAnnotations);
     }

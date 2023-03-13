@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URL;
-import java.text.ParseException;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.*;
@@ -145,14 +144,14 @@ public class KubernetesInstanceFactory {
         Map<String, String> existingAnnotations = (pod.getMetadata().getAnnotations() != null) ? pod.getMetadata().getAnnotations() : new HashMap<>();
         existingAnnotations.putAll(request.elasticProfileProperties());
         existingAnnotations.put(JOB_IDENTIFIER_LABEL_KEY, request.jobIdentifier().toJson());
-        String clusterProfileId = Util.objectUUID(request.clusterProfileProperties());
-        String elasticProfileId = Util.objectUUID(request.elasticProfileProperties());
+        String clusterProfileHash = Util.objectUUID(request.clusterProfileProperties());
+        String elasticProfileHash = Util.objectUUID(request.elasticProfileProperties());
         LOG.debug("[reuse] Annotating newly-created pod {} with {}: {}, {}: {}",
             pod.getMetadata().getName(),
-            KubernetesInstance.CLUSTER_PROFILE_ID, clusterProfileId,
-            KubernetesInstance.ELASTIC_PROFILE_ID, elasticProfileId);
-        existingAnnotations.put(KubernetesInstance.CLUSTER_PROFILE_ID, clusterProfileId);
-        existingAnnotations.put(KubernetesInstance.ELASTIC_PROFILE_ID, elasticProfileId);
+            KubernetesInstance.CLUSTER_PROFILE_HASH, clusterProfileHash,
+            KubernetesInstance.ELASTIC_PROFILE_HASH, elasticProfileHash);
+        existingAnnotations.put(KubernetesInstance.CLUSTER_PROFILE_HASH, clusterProfileHash);
+        existingAnnotations.put(KubernetesInstance.ELASTIC_PROFILE_HASH, elasticProfileHash);
         pod.getMetadata().setAnnotations(existingAnnotations);
     }
 

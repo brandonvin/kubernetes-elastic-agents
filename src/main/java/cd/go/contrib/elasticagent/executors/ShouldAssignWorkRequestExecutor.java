@@ -61,21 +61,21 @@ public class ShouldAssignWorkRequestExecutor implements RequestExecutor {
             }
 
             // Agent reuse enabled - assign work if the job's cluster profile and elastic profile match this agent.
-            String jobClusterProfileId = Util.objectUUID(request.clusterProfileProperties());
-            String podClusterProfileId = instance.getPodAnnotations().get(KubernetesInstance.CLUSTER_PROFILE_ID);
-            boolean matchClusterProfile = jobClusterProfileId.equals(podClusterProfileId);
+            String jobClusterProfileHash = Util.objectUUID(request.clusterProfileProperties());
+            String podClusterProfileHash = instance.getPodAnnotations().get(KubernetesInstance.CLUSTER_PROFILE_HASH);
+            boolean matchClusterProfile = jobClusterProfileHash.equals(podClusterProfileHash);
 
-            String jobElasticProfileId = Util.objectUUID(request.elasticProfileProperties());
-            String podElasticProfileId = instance.getPodAnnotations().get(KubernetesInstance.ELASTIC_PROFILE_ID);
-            boolean matchElasticProfile = jobElasticProfileId.equals(podElasticProfileId);
+            String jobElasticProfileHash = Util.objectUUID(request.elasticProfileProperties());
+            String podElasticProfileHash = instance.getPodAnnotations().get(KubernetesInstance.ELASTIC_PROFILE_HASH);
+            boolean matchElasticProfile = jobElasticProfileHash.equals(podElasticProfileHash);
 
             LOG.info("[reuse] Should assign work? jobId={} has clusterProfileId={}, elasticProfileId={}; pod {} has clusterProfileId={}, elasticProfileId={}",
                     jobId,
-                    jobClusterProfileId,
-                    jobElasticProfileId,
+                    jobClusterProfileHash,
+                    jobElasticProfileHash,
                     instance.getPodName(),
-                    podClusterProfileId,
-                    podElasticProfileId);
+                    podClusterProfileHash,
+                    podElasticProfileHash);
             if (matchClusterProfile && matchElasticProfile) {
                 LOG.info("[reuse] Reusing existing pod {} for job {}", instance.getPodName(), request);
                 return instance.toBuilder().agentState(KubernetesInstance.AgentState.Building).build();
