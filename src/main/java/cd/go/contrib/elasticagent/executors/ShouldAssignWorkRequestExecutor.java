@@ -62,11 +62,11 @@ public class ShouldAssignWorkRequestExecutor implements RequestExecutor {
 
             // Agent reuse enabled - assign work if the job's cluster profile and elastic profile match this agent.
             String jobClusterProfileId = Util.objectUUID(request.clusterProfileProperties());
-            String podClusterProfileId = instance.getPodAnnotations().getOrDefault(KubernetesInstance.CLUSTER_PROFILE_ID, "unknown");
+            String podClusterProfileId = instance.getPodAnnotations().get(KubernetesInstance.CLUSTER_PROFILE_ID);
             boolean matchClusterProfile = jobClusterProfileId.equals(podClusterProfileId);
 
             String jobElasticProfileId = Util.objectUUID(request.elasticProfileProperties());
-            String podElasticProfileId = instance.getPodAnnotations().getOrDefault(KubernetesInstance.ELASTIC_PROFILE_ID, "unknown");
+            String podElasticProfileId = instance.getPodAnnotations().get(KubernetesInstance.ELASTIC_PROFILE_ID);
             boolean matchElasticProfile = jobElasticProfileId.equals(podElasticProfileId);
 
             LOG.info("[reuse] Should assign work? jobId={} has clusterProfileId={}, elasticProfileId={}; pod {} has clusterProfileId={}, elasticProfileId={}",
