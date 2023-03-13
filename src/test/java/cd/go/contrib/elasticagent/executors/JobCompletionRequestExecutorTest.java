@@ -34,7 +34,6 @@ import static org.mockito.Mockito.*;
 
 public class JobCompletionRequestExecutorTest {
 
-    // TODO: test agent reuse enabled/disabled cases
     @Test
     public void withAgentReuseDisabledShouldTerminateAgent() throws Exception {
         String elasticAgentId = "agent-1";

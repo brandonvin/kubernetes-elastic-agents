@@ -77,11 +77,7 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
         }
     }
 
-    private List<KubernetesInstance> findPodsEligibleForReuse(
-        CreateAgentRequest request,
-        // TODO: use PluginSettings to enable/disable reuse
-        PluginSettings settings) {
-
+    private List<KubernetesInstance> findPodsEligibleForReuse(CreateAgentRequest request) {
         Long jobId = request.jobIdentifier().getJobId();
         String jobClusterProfileId = Util.objectUUID(request.clusterProfileProperties());
         String jobElasticProfileId = Util.objectUUID(request.elasticProfileProperties());
@@ -133,10 +129,11 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
     }
 
 
-    private Optional<KubernetesInstance> createIfNecessaryHelper(CreateAgentRequest request,
-                                                                 PluginSettings settings,
-                                                                 PluginRequest pluginRequest,
-                                                                 ConsoleLogAppender consoleLogAppender) {
+    private Optional<KubernetesInstance> createIfNecessaryHelper(
+            CreateAgentRequest request,
+            PluginSettings settings,
+            PluginRequest pluginRequest,
+            ConsoleLogAppender consoleLogAppender) {
         JobIdentifier jobIdentifier = request.jobIdentifier();
         Long jobId = jobIdentifier.getJobId();
 
@@ -161,7 +158,7 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
 
         // Agent reuse enabled - look for any extant pods that match this job,
         // and create a new one only if there are none.
-        List<KubernetesInstance> reusablePods = findPodsEligibleForReuse(request, settings);
+        List<KubernetesInstance> reusablePods = findPodsEligibleForReuse(request);
         LOG.info("[reuse] Found {} pods eligible for reuse for CreateAgentRequest for job {}: {}",
               reusablePods.size(),
               jobId,

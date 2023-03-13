@@ -80,7 +80,6 @@ public class MigrateConfigurationRequestExecutor implements RequestExecutor {
         return new DefaultGoPluginApiResponse(200, migrateConfigurationRequest.toJSON());
     }
 
-    // TODO: should set enable pod reuse to false by default.
     //this is responsible to copy over plugin settings configurations to cluster profile and if required rename no op cluster
     private void migrateConfigForCluster(PluginSettings pluginSettings, List<ElasticAgentProfile> associatedElasticAgentProfiles, ClusterProfile clusterProfile) {
         LOG.info("[Migrate Config] Coping over existing plugin settings configurations to '{}' cluster profile.", clusterProfile.getId());
