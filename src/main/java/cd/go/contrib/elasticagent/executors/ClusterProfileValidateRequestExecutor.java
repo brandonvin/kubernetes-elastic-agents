@@ -58,7 +58,6 @@ public class ClusterProfileValidateRequestExecutor implements RequestExecutor {
         }
 
         validateGoServerUrl(result);
-        validateEnableAgentReuse(result);
         Set<String> set = new HashSet<>(request.getProperties().keySet());
         set.removeAll(knownFields);
 
@@ -87,11 +86,5 @@ public class ClusterProfileValidateRequestExecutor implements RequestExecutor {
                 result.add(error);
             }
         }
-    }
-
-    private void validateEnableAgentReuse(ArrayList<Map<String, String>> result) {
-        String key = ENABLE_AGENT_REUSE.getKey();
-        String value = request.getProperties().get(key);
-        LOG.info("[Validate Cluster Profile] Value of {} is {}", key, Objects.toString(value));
     }
 }
