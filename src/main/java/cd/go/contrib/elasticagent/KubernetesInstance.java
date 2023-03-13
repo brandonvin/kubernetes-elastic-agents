@@ -147,7 +147,7 @@ public class KubernetesInstance {
         Map<String, String> podAnnotations = Collections.emptyMap();
         public KubernetesInstanceBuilder podAnnotations(Map<String, String> podAnnotations) {
             if (podAnnotations == null) {
-                this.podAnnotations = Map.of();
+                this.podAnnotations = Collections.emptyMap();
             } else {
                 this.podAnnotations = Map.copyOf(podAnnotations);
             }

@@ -18,6 +18,7 @@ package cd.go.contrib.elasticagent;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,7 +32,7 @@ class KubernetesInstanceTest {
                 .environment("test")
                 .jobId(1L)
                 .build();
-        assertEquals(Map.of(), instance1.getPodAnnotations());
+        assertEquals(Collections.emptyMap(), instance1.getPodAnnotations());
     }
 
     @Test
@@ -42,7 +43,7 @@ class KubernetesInstanceTest {
                 .podAnnotations(null)
                 .jobId(1L)
                 .build();
-        assertEquals(Map.of(), instance1.getPodAnnotations());
+        assertEquals(Collections.emptyMap(), instance1.getPodAnnotations());
     }
 
     @Test
