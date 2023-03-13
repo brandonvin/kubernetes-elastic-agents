@@ -28,9 +28,11 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 public class JobCompletionRequestExecutorTest {
 
+    // TODO: test agent reuse enabled/disabled cases
     @Test
     public void shouldMarkInstanceIdleOnJobCompletion() throws Exception {
         JobIdentifier jobIdentifier = new JobIdentifier(100L);
@@ -42,7 +44,8 @@ public class JobCompletionRequestExecutorTest {
         KubernetesAgentInstances agentInstances = new KubernetesAgentInstances(null, null, instances);
         assertThat(agentInstances.find(elasticAgentId).getAgentState()).isEqualTo(KubernetesInstance.AgentState.Building);
 
-        JobCompletionRequestExecutor executor = new JobCompletionRequestExecutor(request, agentInstances);
+        PluginRequest pluginRequest = mock(PluginRequest.class);
+        JobCompletionRequestExecutor executor = new JobCompletionRequestExecutor(request, agentInstances, pluginRequest);
         GoPluginApiResponse response = executor.execute();
 
         assertThat(agentInstances.find(elasticAgentId).getAgentState()).isEqualTo(KubernetesInstance.AgentState.Idle);

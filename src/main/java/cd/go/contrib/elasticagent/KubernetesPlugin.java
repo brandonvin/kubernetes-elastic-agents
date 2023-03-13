@@ -90,7 +90,7 @@ public class KubernetesPlugin implements GoPlugin {
                 case REQUEST_JOB_COMPLETION:
                     JobCompletionRequest jobCompletionRequest = JobCompletionRequest.fromJSON(request.requestBody());
                     clusterProfileProperties = jobCompletionRequest.clusterProfileProperties();
-                    return jobCompletionRequest.executor(getAgentInstancesFor(clusterProfileProperties)).execute();
+                    return jobCompletionRequest.executor(getAgentInstancesFor(clusterProfileProperties), pluginRequest).execute();
                 case REQUEST_CLUSTER_STATUS_REPORT:
                     ClusterStatusReportRequest clusterStatusReportRequest = ClusterStatusReportRequest.fromJSON(request.requestBody());
                     clusterProfileProperties = clusterStatusReportRequest.clusterProfileProperties();
