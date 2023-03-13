@@ -118,6 +118,10 @@ public class PluginSettings {
         return enableAgentReuse;
     }
 
+    public void setEnableAgentReuse(boolean enableAgentReuse) {
+        this.enableAgentReuse = enableAgentReuse;
+    }
+
     private <T> T getOrDefault(T t, T defaultValue) {
         if (t instanceof String && StringUtils.isBlank(String.valueOf(t))) {
             return defaultValue;
