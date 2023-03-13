@@ -92,11 +92,8 @@
 	</div>
 
 	<div class="row">
-		<label>Enable agent reuse</label>
-		<select ng-model="enable_agent_reuse" ng-required="true">
-			<option value="false">Disable</option>
-			<option value="true">Enable</option>
-		</select>
+		<input id="enable_agent_reuse" type="checkbox" ng-model="enable_agent_reuse" ng-required="true" ng-true-value="true" ng-false-value="false"/>
+		<label for="enable_agent_reuse">Enable agent reuse</label>
 		<span class="form_error" ng-show="GOINPUTNAME[enable_agent_reuse].$error.server">{{GOINPUTNAME[enable_agent_reuse].$error.server}}</span>
 		<label class="form-help-content">(Experimental feature) Enable agent pods on this cluster to be reused for multiple jobs.</label>
 	</div>
