@@ -144,14 +144,12 @@ public class KubernetesInstanceFactory {
         Map<String, String> existingAnnotations = (pod.getMetadata().getAnnotations() != null) ? pod.getMetadata().getAnnotations() : new HashMap<>();
         existingAnnotations.putAll(request.elasticProfileProperties());
         existingAnnotations.put(JOB_IDENTIFIER_LABEL_KEY, request.jobIdentifier().toJson());
-        String clusterProfileHash = Util.objectUUID(request.clusterProfileProperties());
-        String elasticProfileHash = Util.objectUUID(request.elasticProfileProperties());
-        LOG.debug("[reuse] Annotating newly-created pod {} with {}: {}, {}: {}",
-            pod.getMetadata().getName(),
-            KubernetesInstance.CLUSTER_PROFILE_HASH, clusterProfileHash,
-            KubernetesInstance.ELASTIC_PROFILE_HASH, elasticProfileHash);
-        existingAnnotations.put(KubernetesInstance.CLUSTER_PROFILE_HASH, clusterProfileHash);
-        existingAnnotations.put(KubernetesInstance.ELASTIC_PROFILE_HASH, elasticProfileHash);
+        Map<String, String> annotationsForAgentReuse = Map.of(
+            KubernetesInstance.CLUSTER_PROFILE_HASH, Util.objectUUID(request.clusterProfileProperties()),
+            KubernetesInstance.ELASTIC_PROFILE_HASH, Util.objectUUID(request.elasticProfileProperties())
+        );
+        LOG.debug("[reuse] Annotating newly-created pod {} with {}", pod.getMetadata().getName(), annotationsForAgentReuse);
+        existingAnnotations.putAll(annotationsForAgentReuse);
         pod.getMetadata().setAnnotations(existingAnnotations);
     }
 
