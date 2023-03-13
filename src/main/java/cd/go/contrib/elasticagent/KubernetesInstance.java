@@ -59,7 +59,7 @@ public class KubernetesInstance {
      */
     public static final String ELASTIC_PROFILE_HASH = "go.cd/elastic-profile-hash";
 
-    Instant createdAt;
+    private final Instant createdAt;
 
     public Instant getCreatedAt() {
         return this.createdAt;
@@ -68,13 +68,13 @@ public class KubernetesInstance {
     /**
      * environment is populated from k8s pod metadata.labels.Elastic-Agent-Environment
      */
-    String environment;
+    private final String environment;
 
     public String getEnvironment() {
         return this.environment;
     }
 
-    String podName;
+    private final String podName;
 
     public String getPodName() {
         return this.podName;
@@ -83,7 +83,7 @@ public class KubernetesInstance {
     /**
      * podAnnotations is populated from k8s pod metadata.annotations
      */
-    Map<String, String> podAnnotations;
+    private final Map<String, String> podAnnotations;
 
     public Map<String, String> getPodAnnotations() {
         return Map.copyOf(this.podAnnotations);
@@ -92,17 +92,17 @@ public class KubernetesInstance {
     /**
      * jobId is populated from k8s pod metadata.labels.Elastic-Agent-Job-Id
      */
-    Long jobId;
+    private final Long jobId;
     public Long getJobId() {
         return this.jobId;
     }
 
-    PodState podState = PodState.Pending;
+    private final PodState podState;
     public PodState getPodState() {
         return this.podState;
     }
 
-    AgentState agentState = AgentState.Unknown;
+    private final AgentState agentState;
     public AgentState getAgentState() {
         return this.agentState;
     }
@@ -125,25 +125,25 @@ public class KubernetesInstance {
     }
 
     public static class KubernetesInstanceBuilder {
-        Instant createdAt = Instant.now();
+        private Instant createdAt = Instant.now();
         public KubernetesInstanceBuilder createdAt(Instant createdAt) {
             this.createdAt = createdAt;
             return this;
         }
 
-        String environment;
+        private String environment;
         public KubernetesInstanceBuilder environment(String environment) {
             this.environment = environment;
             return this;
         }
 
-        String podName;
+        private String podName;
         public KubernetesInstanceBuilder podName(String podName) {
             this.podName = podName;
             return this;
         }
 
-        Map<String, String> podAnnotations = Collections.emptyMap();
+        private Map<String, String> podAnnotations = Collections.emptyMap();
         public KubernetesInstanceBuilder podAnnotations(Map<String, String> podAnnotations) {
             if (podAnnotations == null) {
                 this.podAnnotations = Collections.emptyMap();
@@ -153,18 +153,19 @@ public class KubernetesInstance {
             return this;
         }
 
-        Long jobId;
+        private Long jobId;
         public KubernetesInstanceBuilder jobId(Long jobId) {
             this.jobId = jobId;
             return this;
         }
-        PodState podState = PodState.Pending;
+
+        private PodState podState = PodState.Pending;
         public KubernetesInstanceBuilder podState(PodState podState) {
             this.podState = podState;
             return this;
         }
 
-        AgentState agentState = AgentState.Unknown;
+        private AgentState agentState = AgentState.Unknown;
         public KubernetesInstanceBuilder agentState(AgentState agentState) {
             this.agentState = agentState;
             return this;
