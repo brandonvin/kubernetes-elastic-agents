@@ -57,6 +57,6 @@ public class GetClusterProfileViewRequestExecutorTest {
         }
 
         final Elements inputs = document.select("textarea,input[type=text],select,input[type=checkbox]");
-        assertThat(inputs).hasSize(GetProfileMetadataExecutor.FIELDS.size() - 3); // do not include SPECIFIED_USING_POD_CONFIGURATION, POD_SPEC_TYPE, REMOTE_FILE_TYPE key
+        assertThat(inputs).hasSize(GetClusterProfileMetadataExecutor.FIELDS.size());
     }
 }
