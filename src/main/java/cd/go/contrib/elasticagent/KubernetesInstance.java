@@ -25,7 +25,6 @@ import java.time.Instant;
  * Its fields are immutable.
  */
 public class KubernetesInstance {
-
     /**
      * AgentState represents the possible agent states from the
      * GoCD server perspective - whether it is currently running a job,
@@ -190,5 +189,4 @@ public class KubernetesInstance {
                 .podState(podState)
                 .agentState(agentState);
     }
-
 }

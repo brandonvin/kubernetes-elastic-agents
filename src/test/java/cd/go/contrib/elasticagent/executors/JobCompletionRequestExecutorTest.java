@@ -78,5 +78,4 @@ public class JobCompletionRequestExecutorTest {
         assertEquals(200, response.responseCode());
         assertTrue(response.responseBody().isEmpty());
     }
-
 }

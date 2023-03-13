@@ -21,8 +21,6 @@ import cd.go.contrib.elasticagent.requests.CreateAgentRequest;
 
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.function.Function;
-
 
 /**
  * Plugin implementors should implement these methods to interface to your cloud.

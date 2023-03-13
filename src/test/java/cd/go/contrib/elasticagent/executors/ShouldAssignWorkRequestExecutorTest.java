@@ -165,5 +165,4 @@ public class ShouldAssignWorkRequestExecutorTest extends BaseTest {
         assertThat(response.responseCode()).isEqualTo(200);
         assertThat(response.responseBody()).isEqualTo("false");
     }
-
 }
