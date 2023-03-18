@@ -20,7 +20,7 @@ import cd.go.contrib.elasticagent.executors.ServerPingRequestExecutor;
 import cd.go.contrib.elasticagent.requests.CreateAgentRequest;
 
 import java.util.Optional;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * Plugin implementors should implement these methods to interface to your cloud.
@@ -38,7 +38,7 @@ public interface AgentInstances<T> {
      * @param pluginRequest the plugin request object
      * @param consoleLogAppender
      */
-    Optional<T> createIfNecessary(CreateAgentRequest request, PluginSettings settings, PluginRequest pluginRequest, ConsoleLogAppender consoleLogAppender) throws Exception;
+    Optional<T> requestCreateAgent(CreateAgentRequest request, PluginSettings settings, PluginRequest pluginRequest, ConsoleLogAppender consoleLogAppender) throws Exception;
 
     /**
      * This message is sent when the plugin needs to terminate the agent instance.
@@ -96,6 +96,15 @@ public interface AgentInstances<T> {
      */
     T updateAgentState(String agentId, KubernetesInstance.AgentState newAgentState);
 
-    T compute(String agentId, BiFunction<String, T, T> computeFn);
+    /**
+     * Atomically update the agent instance for the given <code>agentId</code>.
+     * <code>computeFn</code> is called with the current agent instance if it exists,
+     * or null if it doesn't exist. <code>computeFn</code> should return a new agent instance
+     * that represents its new state.
+     * @param agentId
+     * @param computeFn
+     * @return
+     */
+    T updateAgent(String agentId, Function<T, T> computeFn);
 }
 

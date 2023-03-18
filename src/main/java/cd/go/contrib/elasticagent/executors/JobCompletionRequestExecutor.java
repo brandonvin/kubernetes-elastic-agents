@@ -53,7 +53,9 @@ public class JobCompletionRequestExecutor implements RequestExecutor {
             pluginRequest.deleteAgents(agents);
         } else {
             // Agent reuse enabled - mark the pod/agent as idle and leave it for reuse by other jobs or eventual cleanup.
-            KubernetesInstance updated = agentInstances.updateAgentState(elasticAgentId, KubernetesInstance.AgentState.Idle);
+            KubernetesInstance updated = agentInstances.updateAgent(
+                    elasticAgentId,
+                    instance -> instance.toBuilder().agentState(KubernetesInstance.AgentState.Idle).build());
             if (updated != null) {
                 LOG.info("[Job Completion] Received job completion for agent ID {}. It is now marked Idle.", elasticAgentId);
             } else {

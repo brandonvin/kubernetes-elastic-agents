@@ -28,7 +28,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static cd.go.contrib.elasticagent.KubernetesPlugin.LOG;
@@ -60,11 +60,11 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
     }
 
     @Override
-    public Optional<KubernetesInstance> createIfNecessary(CreateAgentRequest request, PluginSettings settings, PluginRequest pluginRequest, ConsoleLogAppender consoleLogAppender) {
+    public Optional<KubernetesInstance> requestCreateAgent(CreateAgentRequest request, PluginSettings settings, PluginRequest pluginRequest, ConsoleLogAppender consoleLogAppender) {
         final Integer maxAllowedPods = settings.getMaxPendingPods();
         synchronized (instances) {
             if (instances.size() < maxAllowedPods) {
-                return createIfNecessaryHelper(request, settings, pluginRequest, consoleLogAppender);
+                return requestCreateAgentHelper(request, settings, pluginRequest, consoleLogAppender);
             } else {
                 String message = String.format("[Create Agent Request] The number of pending kubernetes pods is currently at the maximum permissible limit (%s). Total kubernetes pods (%s). Not creating any more pods.",
                         maxAllowedPods,
@@ -128,7 +128,7 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
     }
 
 
-    private Optional<KubernetesInstance> createIfNecessaryHelper(
+    private Optional<KubernetesInstance> requestCreateAgentHelper(
             CreateAgentRequest request,
             PluginSettings settings,
             PluginRequest pluginRequest,
@@ -288,8 +288,8 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
     }
 
     @Override
-    public KubernetesInstance compute(String agentId, BiFunction<String, KubernetesInstance, KubernetesInstance> computeFn) {
-        return instances.compute(agentId, computeFn);
+    public KubernetesInstance updateAgent(String agentId, Function<KubernetesInstance, KubernetesInstance> updateFn) {
+        return instances.compute(agentId, (_agentId, instance) -> updateFn.apply(instance));
     }
 
     @Override

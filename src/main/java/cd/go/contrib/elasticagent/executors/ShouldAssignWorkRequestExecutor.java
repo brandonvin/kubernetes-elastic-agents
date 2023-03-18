@@ -39,7 +39,7 @@ public class ShouldAssignWorkRequestExecutor implements RequestExecutor {
     @Override
     public GoPluginApiResponse execute() {
         String agentId = request.agent().elasticAgentId();
-        KubernetesInstance updated = agentInstances.compute(agentId, (_agentId, instance) -> {
+        KubernetesInstance updated = agentInstances.updateAgent(agentId, instance -> {
             // No such agent is known to this plugin.
             if (instance == null) {
                 return null;
