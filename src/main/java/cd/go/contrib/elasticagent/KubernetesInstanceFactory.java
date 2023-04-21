@@ -140,13 +140,29 @@ public class KubernetesInstanceFactory {
         pod.getMetadata().setLabels(existingLabels);
     }
 
+    /**
+     * Compute a string that uniquely identifies the configuration that was used to launch an agent pod.
+     * @param clusterProfileProperties Cluster profile properties of the agent
+     * @param elasticProfileProperties Elastic profile properties of the agent
+     * @return The unique identifier string.
+     */
+    public static String agentConfigHash(ClusterProfileProperties clusterProfileProperties, Map<String, String> elasticProfileProperties) {
+        return Util.GSON.toJson(Map.of(
+                "cluster_profile_properties", Util.objectUUID(clusterProfileProperties),
+                "elastic_profile_properties", Util.objectUUID(elasticProfileProperties)
+        ));
+    }
+
+    public static boolean isSameConfigHash(String hashA, String hashB) {
+        return hashA != null && hashA.equals(hashB);
+    }
+
     private static void setAnnotations(Pod pod, CreateAgentRequest request) {
         Map<String, String> existingAnnotations = (pod.getMetadata().getAnnotations() != null) ? pod.getMetadata().getAnnotations() : new HashMap<>();
         existingAnnotations.putAll(request.elasticProfileProperties());
         existingAnnotations.put(JOB_IDENTIFIER_LABEL_KEY, request.jobIdentifier().toJson());
         Map<String, String> annotationsForAgentReuse = Map.of(
-            KubernetesInstance.CLUSTER_PROFILE_HASH, Util.objectUUID(request.clusterProfileProperties()),
-            KubernetesInstance.ELASTIC_PROFILE_HASH, Util.objectUUID(request.elasticProfileProperties())
+            KubernetesInstance.ELASTIC_CONFIG_HASH, agentConfigHash(request.clusterProfileProperties(), request.elasticProfileProperties())
         );
         LOG.debug("[reuse] Annotating newly-created pod {} with {}", pod.getMetadata().getName(), annotationsForAgentReuse);
         existingAnnotations.putAll(annotationsForAgentReuse);

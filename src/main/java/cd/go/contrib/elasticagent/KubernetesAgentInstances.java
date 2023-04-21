@@ -78,8 +78,8 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
 
     private List<KubernetesInstance> findPodsEligibleForReuse(CreateAgentRequest request) {
         Long jobId = request.jobIdentifier().getJobId();
-        String jobClusterProfileHash = Util.objectUUID(request.clusterProfileProperties());
-        String jobElasticProfileHash = Util.objectUUID(request.elasticProfileProperties());
+        String jobElasticConfigHash = KubernetesInstanceFactory.agentConfigHash(
+                request.clusterProfileProperties(), request.elasticProfileProperties());
 
         List<KubernetesInstance> eligiblePods = new ArrayList<>();
 
@@ -89,34 +89,23 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
                 continue;
             }
 
-            String podClusterProfileHash = instance.getPodAnnotations().get(KubernetesInstance.CLUSTER_PROFILE_HASH);
-            String podElasticProfileHash = instance.getPodAnnotations().get(KubernetesInstance.ELASTIC_PROFILE_HASH);
-
-            if (podClusterProfileHash == null || podElasticProfileHash == null) {
-                LOG.debug("[reuse] Pod {} is missing one of cluster profile ID or elastic profile ID ({}, {}), not considering for reuse",
-                  instance.getPodName(),
-                  podClusterProfileHash, podElasticProfileHash);
-                continue;
-            }
-
-            boolean sameClusterProfile = podClusterProfileHash.equals(jobClusterProfileHash);
-            boolean sameElasticProfile = podElasticProfileHash.equals(jobElasticProfileHash);
-
+            String podElasticConfigHash = instance.getPodAnnotations().get(KubernetesInstance.ELASTIC_CONFIG_HASH);
+            boolean sameElasticConfig = Objects.equals(podElasticConfigHash, jobElasticConfigHash);
             boolean instanceIsIdle = instance.getAgentState().equals(KubernetesInstance.AgentState.Idle);
             boolean podIsRunning = instance.getPodState().equals(PodState.Running);
-            boolean isReusable = sameElasticProfile && sameClusterProfile && instanceIsIdle && podIsRunning;
+            boolean isReusable = sameElasticConfig && instanceIsIdle && podIsRunning;
 
             LOG.info(
-                    "[reuse] Pod eligible for reuse? {}. jobId={} has clusterProfileId={}, elasticProfileId={}; pod {} has agentState={}, podState={}, clusterProfileId={}, elasticProfileId={}",
-                    isReusable,
-                    jobId,
-                    jobClusterProfileHash,
-                    jobElasticProfileHash,
+                    "[reuse] Is pod {} reusable for job {}? {}. Job has {}={}; pod has {}={}, agentState={}, podState={}",
                     instance.getPodName(),
+                    jobId,
+                    isReusable,
+                    KubernetesInstance.ELASTIC_CONFIG_HASH,
+                    jobElasticConfigHash,
+                    KubernetesInstance.ELASTIC_CONFIG_HASH,
+                    podElasticConfigHash,
                     instance.getAgentState(),
-                    instance.getPodState(),
-                    podClusterProfileHash,
-                    podElasticProfileHash
+                    instance.getPodState()
             );
 
             if (isReusable) {

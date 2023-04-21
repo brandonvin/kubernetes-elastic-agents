@@ -17,11 +17,8 @@
 
 package cd.go.contrib.elasticagent.executors;
 
-import cd.go.contrib.elasticagent.AgentInstances;
-import cd.go.contrib.elasticagent.KubernetesInstance;
-import cd.go.contrib.elasticagent.RequestExecutor;
+import cd.go.contrib.elasticagent.*;
 import cd.go.contrib.elasticagent.requests.ShouldAssignWorkRequest;
-import cd.go.contrib.elasticagent.utils.Util;
 import com.thoughtworks.go.plugin.api.response.DefaultGoPluginApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 
@@ -60,28 +57,26 @@ public class ShouldAssignWorkRequestExecutor implements RequestExecutor {
                 return null;
             }
 
-            // Agent reuse enabled - assign work if the job's cluster profile and elastic profile match this agent.
-            String jobClusterProfileHash = Util.objectUUID(request.clusterProfileProperties());
-            String podClusterProfileHash = instance.getPodAnnotations().get(KubernetesInstance.CLUSTER_PROFILE_HASH);
-            boolean matchClusterProfile = jobClusterProfileHash.equals(podClusterProfileHash);
+            // Agent reuse enabled: assign work if the job and agent have the same elastic config hash.
+            String jobConfigHash = KubernetesInstanceFactory.agentConfigHash(
+                    request.clusterProfileProperties(),
+                    request.elasticProfileProperties());
+            String podConfigHash = instance.getPodAnnotations().get(KubernetesInstance.ELASTIC_CONFIG_HASH);
+            boolean assignWork = KubernetesInstanceFactory.isSameConfigHash(jobConfigHash, podConfigHash);
 
-            String jobElasticProfileHash = Util.objectUUID(request.elasticProfileProperties());
-            String podElasticProfileHash = instance.getPodAnnotations().get(KubernetesInstance.ELASTIC_PROFILE_HASH);
-            boolean matchElasticProfile = jobElasticProfileHash.equals(podElasticProfileHash);
-
-            LOG.info("[reuse] Should assign work? jobId={} has clusterProfileId={}, elasticProfileId={}; pod {} has clusterProfileId={}, elasticProfileId={}",
+            LOG.info("[agent-reuse] Should assign job {} to pod {}? {}. Job has config hash {}; pod has {}={}",
                     jobId,
-                    jobClusterProfileHash,
-                    jobElasticProfileHash,
                     instance.getPodName(),
-                    podClusterProfileHash,
-                    podElasticProfileHash);
-            if (matchClusterProfile && matchElasticProfile) {
-                LOG.info("[reuse] Reusing existing pod {} for job {}", instance.getPodName(), request);
+                    assignWork,
+                    jobConfigHash,
+                    KubernetesInstance.ELASTIC_CONFIG_HASH,
+                    podConfigHash);
+
+            if (assignWork) {
                 return instance.toBuilder().agentState(KubernetesInstance.AgentState.Building).build();
             }
 
-            LOG.info("[should-assign-work] No KubernetesInstance can handle request {}", request);
+            LOG.info("[agent-reuse] No KubernetesInstance can handle request {}", request);
             return null;
         });
 
