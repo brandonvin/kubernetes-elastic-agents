@@ -27,14 +27,14 @@ import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.*;
@@ -42,10 +42,10 @@ import java.util.*;
 import static cd.go.contrib.elasticagent.Constants.*;
 import static cd.go.contrib.elasticagent.KubernetesPlugin.LOG;
 import static cd.go.contrib.elasticagent.executors.GetProfileMetadataExecutor.*;
+import static cd.go.contrib.elasticagent.utils.Util.isBlank;
 import static java.lang.String.valueOf;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.text.MessageFormat.format;
-import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class KubernetesInstanceFactory {
     public KubernetesInstance create(CreateAgentRequest request, PluginSettings settings, KubernetesClient client, PluginRequest pluginRequest) {
@@ -63,7 +63,7 @@ public class KubernetesInstanceFactory {
             }
         }
         else {
-            if (Boolean.valueOf(request.elasticProfileProperties().get(SPECIFIED_USING_POD_CONFIGURATION.getKey()))) {
+            if (Boolean.parseBoolean(request.elasticProfileProperties().get(SPECIFIED_USING_POD_CONFIGURATION.getKey()))) {
                 return createUsingPodYaml(request, settings, client, pluginRequest);
             } else {
                 return createUsingProperties(request, settings, client, pluginRequest);
@@ -97,14 +97,14 @@ public class KubernetesInstanceFactory {
 
     private Boolean privileged(CreateAgentRequest request) {
         final String privilegedMode = request.elasticProfileProperties().get(PRIVILEGED.getKey());
-        if (StringUtils.isBlank(privilegedMode)) {
+        if (isBlank(privilegedMode)) {
             return false;
         }
         return Boolean.valueOf(privilegedMode);
     }
 
     private void setGoCDMetadata(CreateAgentRequest request, PluginSettings settings, PluginRequest pluginRequest, Pod elasticAgentPod) {
-        elasticAgentPod.getMetadata().setCreationTimestamp(Instant.now().toString());
+        elasticAgentPod.getMetadata().setCreationTimestamp(KUBERNETES_POD_CREATION_TIME_FORMAT.format(Instant.now()));
 
         setContainerEnvVariables(elasticAgentPod, request, settings, pluginRequest);
         setAnnotations(elasticAgentPod, request);
@@ -116,7 +116,7 @@ public class KubernetesInstanceFactory {
         HashMap<String, Quantity> limits = new HashMap<>();
 
         String maxMemory = request.elasticProfileProperties().get("MaxMemory");
-        if (StringUtils.isNotBlank(maxMemory)) {
+        if (!isBlank(maxMemory)) {
             Size mem = Size.parse(maxMemory);
             LOG.debug(format("[Create Agent] Setting memory resource limit on k8s pod: {0}.", new Quantity(valueOf((long) mem.toMegabytes()), "M")));
             long memory = (long) mem.toBytes();
@@ -124,7 +124,7 @@ public class KubernetesInstanceFactory {
         }
 
         String maxCPU = request.elasticProfileProperties().get("MaxCPU");
-        if (StringUtils.isNotBlank(maxCPU)) {
+        if (!isBlank(maxCPU)) {
             LOG.debug(format("[Create Agent] Setting cpu resource limit on k8s pod: {0}.", new Quantity(maxCPU)));
             limits.put("cpu", new Quantity(maxCPU));
         }
@@ -178,16 +178,14 @@ public class KubernetesInstanceFactory {
     KubernetesInstance fromKubernetesPod(Pod elasticAgentPod) {
         try {
             ObjectMeta metadata = elasticAgentPod.getMetadata();
-            Instant createdInstant;
-            if (StringUtils.isNotBlank(metadata.getCreationTimestamp())) {
-                createdInstant = Instant.parse(metadata.getCreationTimestamp());
-            } else {
-                createdInstant = Instant.now();
+            Instant createdAt = Instant.now();
+            if (!isBlank(metadata.getCreationTimestamp())) {
+                createdAt = Constants.KUBERNETES_POD_CREATION_TIME_FORMAT.parse(metadata.getCreationTimestamp(), Instant::from);
             }
             String environment = metadata.getLabels().get(ENVIRONMENT_LABEL_KEY);
             Long jobId = Long.valueOf(metadata.getLabels().get(JOB_ID_LABEL_KEY));
             return KubernetesInstance.builder()
-                    .createdAt(createdInstant)
+                    .createdAt(createdAt)
                     .environment(environment)
                     .podName(metadata.getName())
                     .podAnnotations(metadata.getAnnotations())
@@ -201,10 +199,10 @@ public class KubernetesInstanceFactory {
 
     private static List<EnvVar> environmentFrom(CreateAgentRequest request, PluginSettings settings, String podName, PluginRequest pluginRequest) {
         ArrayList<EnvVar> env = new ArrayList<>();
-        String goServerUrl = StringUtils.isBlank(settings.getGoServerUrl()) ? pluginRequest.getSeverInfo().getSecureSiteUrl() : settings.getGoServerUrl();
+        String goServerUrl = isBlank(settings.getGoServerUrl()) ? pluginRequest.getSeverInfo().getSecureSiteUrl() : settings.getGoServerUrl();
         env.add(new EnvVar("GO_EA_SERVER_URL", goServerUrl, null));
         String environment = request.elasticProfileProperties().get("Environment");
-        if (StringUtils.isNotBlank(environment)) {
+        if (!isBlank(environment)) {
             env.addAll(parseEnvironments(environment));
         }
         env.addAll(request.autoregisterPropertiesAsEnvironmentVars(podName));
@@ -236,7 +234,7 @@ public class KubernetesInstanceFactory {
         labels.put(CREATED_BY_LABEL_KEY, PLUGIN_ID);
         labels.put(JOB_ID_LABEL_KEY, valueOf(request.jobIdentifier().getJobId()));
 
-        if (StringUtils.isNotBlank(request.environment())) {
+        if (!isBlank(request.environment())) {
             labels.put(ENVIRONMENT_LABEL_KEY, request.environment());
         }
 
@@ -292,17 +290,16 @@ public class KubernetesInstanceFactory {
             throw new IllegalArgumentException("RemoteFileType value should be one of `json` or `yaml`.");
         }
 
-        File podSpecFile = new File(String.format("pod_spec_%s", UUID.randomUUID().toString()));
-        try {
-            FileUtils.copyURLToFile(new URL(fileToDownload), podSpecFile);
+        Path podSpecFile = Path.of(String.format("pod_spec_%s", UUID.randomUUID()));
+        try (InputStream downloadStream = new URL(fileToDownload).openStream()){
+            Files.copy(downloadStream, podSpecFile);
             LOG.debug(format("Finished downloading %s to %s", fileToDownload, podSpecFile));
-            String spec = FileUtils.readFileToString(podSpecFile, UTF_8);
+            String spec = Files.readString(podSpecFile, UTF_8);
             String templatizedPodSpec = getTemplatizedPodSpec(spec);
             elasticAgentPod = mapper.readValue(templatizedPodSpec, Pod.class);
             setPodNameIfNecessary(elasticAgentPod, spec);
-            FileUtils.deleteQuietly(podSpecFile);
+            Files.deleteIfExists(podSpecFile);
             LOG.debug(format("Deleted %s", podSpecFile));
-
         } catch (IOException e) {
             //ignore error here, handle this inside validate profile!
             LOG.error(e.getMessage());
@@ -331,8 +328,8 @@ public class KubernetesInstanceFactory {
         HashMap<String, String> context = new HashMap<>();
         context.put(POD_POSTFIX, UUID.randomUUID().toString());
         context.put(CONTAINER_POSTFIX, UUID.randomUUID().toString());
-        context.put(GOCD_AGENT_IMAGE, "gocd/gocd-agent-alpine-3.16");
-        context.put(LATEST_VERSION, "v22.3.0");
+        context.put(GOCD_AGENT_IMAGE, "gocd/gocd-agent-alpine-3.17");
+        context.put(LATEST_VERSION, "v23.1.0");
         return context;
     }
 }

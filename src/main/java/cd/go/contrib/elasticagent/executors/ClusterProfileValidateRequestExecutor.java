@@ -31,7 +31,7 @@ import static cd.go.contrib.elasticagent.KubernetesPlugin.LOG;
 import static cd.go.contrib.elasticagent.executors.GetClusterProfileMetadataExecutor.ENABLE_AGENT_REUSE;
 import static cd.go.contrib.elasticagent.executors.GetClusterProfileMetadataExecutor.FIELDS;
 import static cd.go.contrib.elasticagent.utils.Util.GSON;
-import static org.apache.commons.lang3.StringUtils.isBlank;
+import static cd.go.contrib.elasticagent.utils.Util.isBlank;
 
 public class ClusterProfileValidateRequestExecutor implements RequestExecutor {
     private ClusterProfileValidateRequest request;

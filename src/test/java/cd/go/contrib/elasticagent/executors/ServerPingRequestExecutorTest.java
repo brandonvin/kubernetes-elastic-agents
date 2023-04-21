@@ -29,12 +29,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.stubbing.Answer;
 
-import static java.time.temporal.ChronoUnit.MINUTES;
-import java.util.*;
 import java.time.Instant;
+import java.util.*;
 
 import static cd.go.contrib.elasticagent.Constants.ENVIRONMENT_LABEL_KEY;
 import static cd.go.contrib.elasticagent.Constants.JOB_ID_LABEL_KEY;
+import static java.time.temporal.ChronoUnit.MINUTES;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -68,7 +68,7 @@ public class ServerPingRequestExecutorTest extends BaseTest {
         when(podResource.get()).thenReturn(mockedPod);
 
         objectMetadata = new ObjectMeta();
-        objectMetadata.setCreationTimestamp(Instant.now().toString());
+        objectMetadata.setCreationTimestamp(Constants.KUBERNETES_POD_CREATION_TIME_FORMAT.format(Instant.now()));
 
         when(mockedPod.getMetadata()).thenReturn(objectMetadata);
 
@@ -212,7 +212,7 @@ public class ServerPingRequestExecutorTest extends BaseTest {
         objectMetadata = new ObjectMeta();
         objectMetadata.setLabels(Map.of(JOB_ID_LABEL_KEY, "20", ENVIRONMENT_LABEL_KEY, "test"));
         objectMetadata.setName(unregisteredAgentId1);
-        objectMetadata.setCreationTimestamp(Instant.now().minus(20, MINUTES).toString());
+        objectMetadata.setCreationTimestamp(Constants.KUBERNETES_POD_CREATION_TIME_FORMAT.format(Instant.now().minus(20, MINUTES)));
 
         when(mockedPod.getMetadata()).thenReturn(objectMetadata);
 

@@ -35,6 +35,10 @@ public class Util {
             .excludeFieldsWithoutExposeAnnotation()
             .create();
 
+    public static boolean isBlank(String str) {
+        return str == null || str.isBlank();
+    }
+
     public static String readResource(String resourceFile) {
         return new String(readResourceBytes(resourceFile), StandardCharsets.UTF_8);
     }
