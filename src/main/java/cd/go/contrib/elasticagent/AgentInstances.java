@@ -88,15 +88,6 @@ public interface AgentInstances<T> {
     T find(String agentId);
 
     /**
-     * Atomically updates the agent state of the specified <code>agentId</code>
-     * in the store, if it exists.
-     *
-     * @param agentId the elastic agent id
-     * @return the updated instance, or null if it did not exist
-     */
-    T updateAgentState(String agentId, KubernetesInstance.AgentState newAgentState);
-
-    /**
      * Atomically update the agent instance for the given <code>agentId</code>.
      * <code>computeFn</code> is called with the current agent instance if it exists,
      * or null if it doesn't exist. <code>computeFn</code> should return a new agent instance

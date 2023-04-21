@@ -272,11 +272,6 @@ public class KubernetesAgentInstances implements AgentInstances<KubernetesInstan
     }
 
     @Override
-    public KubernetesInstance updateAgentState(String agentId, KubernetesInstance.AgentState newAgentState) {
-        return instances.computeIfPresent(agentId, (key, instance) -> instance.toBuilder().agentState(newAgentState).build());
-    }
-
-    @Override
     public KubernetesInstance updateAgent(String agentId, Function<KubernetesInstance, KubernetesInstance> updateFn) {
         return instances.compute(agentId, (_agentId, instance) -> updateFn.apply(instance));
     }
