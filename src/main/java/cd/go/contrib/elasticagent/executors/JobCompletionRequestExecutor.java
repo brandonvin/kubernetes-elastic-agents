@@ -59,9 +59,14 @@ public class JobCompletionRequestExecutor implements RequestExecutor {
             if (updated != null) {
                 LOG.info("[Job Completion] Received job completion for agent ID {}. It is now marked Idle.", elasticAgentId);
             } else {
-                // TODO: could register the instance here and put it in an idle state.
-                // Otherwise it will be rediscovered later by refreshAll
-                // and put in an Unknown state, and then terminated after a timeout.
+                // This is unlikely to happen. This means the agent just
+                // completed a job, but is not present in the plugin's
+                // in-memory view of agents. If this agent continues running,
+                // it will eventually be found by the periodic call to refresh
+                // all agents, put in an Unknown state, and then terminated
+                // after a timeout.
+                // Alternatively, this could register the instance and put it
+                // in an idle state.
                 LOG.warn("[Job Completion] Received job completion for agent ID {}, which is not known to this plugin.", elasticAgentId);
             }
         }
