@@ -27,8 +27,6 @@ import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import java.util.*;
 
 import static cd.go.contrib.elasticagent.GoServerURLMetadata.GO_SERVER_URL;
-import static cd.go.contrib.elasticagent.KubernetesPlugin.LOG;
-import static cd.go.contrib.elasticagent.executors.GetClusterProfileMetadataExecutor.ENABLE_AGENT_REUSE;
 import static cd.go.contrib.elasticagent.executors.GetClusterProfileMetadataExecutor.FIELDS;
 import static cd.go.contrib.elasticagent.utils.Util.GSON;
 import static cd.go.contrib.elasticagent.utils.Util.isBlank;
