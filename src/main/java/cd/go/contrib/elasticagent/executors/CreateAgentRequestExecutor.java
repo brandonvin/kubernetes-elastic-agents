@@ -21,16 +21,17 @@ import cd.go.contrib.elasticagent.requests.CreateAgentRequest;
 import com.thoughtworks.go.plugin.api.response.DefaultGoPluginApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 
+import static cd.go.contrib.elasticagent.KubernetesPlugin.LOG;
+import static java.text.MessageFormat.format;
+
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
-import static cd.go.contrib.elasticagent.KubernetesPlugin.LOG;
-import static java.text.MessageFormat.format;
-
 public class CreateAgentRequestExecutor implements RequestExecutor {
     private static final DateTimeFormatter MESSAGE_PREFIX_FORMATTER = DateTimeFormatter.ofPattern("'##|'HH:mm:ss.SSS '[go]'");
+    private static final DateTimeFormatter UTC_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss +00:00");
     private final AgentInstances<KubernetesInstance> agentInstances;
     private final PluginRequest pluginRequest;
     private final CreateAgentRequest request;
@@ -48,9 +49,8 @@ public class CreateAgentRequestExecutor implements RequestExecutor {
             final String message = String.format("%s %s\n", MESSAGE_PREFIX_FORMATTER.format(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC)), text);
             pluginRequest.appendToConsoleLog(request.jobIdentifier(), message);
         };
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss +00:00");
         LocalDateTime localNow = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
-        consoleLogAppender.accept(format("Received request to create a pod for job {0} in cluster {1} at {2}", request.jobIdentifier(), request.clusterProfileProperties().getClusterUrl(), fmt.format(localNow)));
+        consoleLogAppender.accept(format("Received request to create a pod for job {0} in cluster {1} at {2}", request.jobIdentifier(), request.clusterProfileProperties().getClusterUrl(), UTC_FORMAT.format(localNow)));
         try {
             agentInstances.requestCreateAgent(request, request.clusterProfileProperties(), pluginRequest, consoleLogAppender);
         } catch (Exception e) {
