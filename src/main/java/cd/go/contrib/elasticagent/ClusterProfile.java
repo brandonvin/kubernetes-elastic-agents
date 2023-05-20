@@ -20,8 +20,6 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 
-import java.lang.reflect.Type;
-import java.util.HashMap;
 import java.util.Objects;
 
 import static cd.go.contrib.elasticagent.utils.Util.GSON;
@@ -102,7 +100,6 @@ public class ClusterProfile {
     }
 
     public void setClusterProfileProperties(PluginSettings pluginSettings) {
-        Type typeToken = new TypeToken<HashMap<String, String>>() {}.getType();
-        this.clusterProfileProperties = ClusterProfileProperties.fromConfiguration(GSON.fromJson(GSON.toJson(pluginSettings), typeToken));
+        this.clusterProfileProperties = ClusterProfileProperties.fromConfiguration(GSON.fromJson(GSON.toJson(pluginSettings), new TypeToken<>() {}));
     }
 }

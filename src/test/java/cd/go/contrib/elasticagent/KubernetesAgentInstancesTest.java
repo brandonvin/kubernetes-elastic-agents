@@ -59,7 +59,7 @@ public class KubernetesAgentInstancesTest {
     PluginRequest mockPluginRequest;
 
     @Mock
-    private MixedOperation<Pod, PodList, PodResource<Pod>> mockedOperation;
+    private MixedOperation<Pod, PodList, PodResource> mockedOperation;
 
     @Mock
     private PodList podList;
